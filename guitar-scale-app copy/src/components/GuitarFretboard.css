@@ -1,0 +1,192 @@
+.fretboard-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding: 20px 0;
+}
+
+.string-labels {
+  display: flex;
+  flex-direction: column;
+  padding-top: 52px; /* align with strings, accounting for fret numbers + inlay row */
+  min-width: 60px;
+}
+
+.string-label {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ccc;
+  white-space: nowrap;
+}
+
+.fretboard {
+  position: relative;
+  background: linear-gradient(180deg, #3e2723 0%, #5d4037 50%, #3e2723 100%);
+  border-radius: 4px;
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  border: 2px solid #2c1e17;
+}
+
+/* Fret numbers */
+.fret-numbers {
+  display: flex;
+  height: 22px;
+}
+
+.fret-number {
+  width: 70px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #aaa;
+  padding: 2px 0;
+}
+
+/* Inlay dots */
+.inlay-row {
+  display: flex;
+  height: 10px;
+  margin-bottom: 5px;
+}
+
+.inlay-cell {
+  width: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  gap: 4px;
+}
+
+.inlay-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #f5f5f5, #bbb);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+.inlay-dot.double-top,
+.inlay-dot.double-bottom {
+  width: 7px;
+  height: 7px;
+}
+
+/* Guitar strings */
+.guitar-string {
+  display: flex;
+  height: 40px;
+  position: relative;
+}
+
+/* Fret cells */
+.fret-cell {
+  width: 70px;
+  height: 40px;
+  position: relative;
+  cursor: pointer;
+  border-right: 3px solid #c0c0c0;
+  border-right-color: #b0b0b0;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease;
+}
+
+.fret-cell:first-child {
+  border-left: 5px solid #222;
+}
+
+.fret-cell:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.fret-cell.active {
+  background-color: rgba(33, 150, 243, 0.15);
+}
+
+/* String wire */
+.string-wire {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 2px;
+  background: linear-gradient(180deg, #e0e0e0, #999);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+
+.wire-0 { height: 1.5px; }
+.wire-1 { height: 1.8px; }
+.wire-2 { height: 2px; }
+.wire-3 { height: 2.5px; background: linear-gradient(180deg, #d4a056, #b8860b); }
+.wire-4 { height: 3px; background: linear-gradient(180deg, #d4a056, #b8860b); }
+.wire-5 { height: 3.5px; background: linear-gradient(180deg, #d4a056, #b8860b); }
+
+/* Markers */
+.marker {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.marker span {
+  font-size: 14px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Active marker (waiting for input) */
+.active-marker {
+  background-color: #2196F3;
+  animation: pulse 1.2s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(33, 150, 243, 0.6);
+}
+
+.active-marker span {
+  font-size: 16px;
+  animation: blink 0.8s ease-in-out infinite;
+}
+
+/* Finger marker (with value assigned) */
+.finger-marker {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  transition: transform 0.2s ease;
+}
+
+.fret-cell:hover .finger-marker {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 0.8;
+  }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
