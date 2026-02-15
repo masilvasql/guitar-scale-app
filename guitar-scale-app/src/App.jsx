@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import html2canvas from 'html2canvas'
 import GuitarFretboard from './components/GuitarFretboard'
 import Controls from './components/Controls'
 import './App.css'
@@ -15,6 +16,7 @@ function App() {
   const [scaleName, setScaleName] = useState('')
   const [pendingNote, setPendingNote] = useState(null) // letter waiting for # or b
   const pendingTimerRef = useRef(null)
+  const captureRef = useRef(null)
 
   const handleCellClick = useCallback((stringIndex, fretIndex) => {
     const key = `${stringIndex}-${fretIndex}`
@@ -61,6 +63,26 @@ function App() {
     setActiveCell(null)
     setPendingNote(null)
   }, [])
+
+  const handleDownload = useCallback(async () => {
+    if (!captureRef.current) return
+    try {
+      const canvas = await html2canvas(captureRef.current, {
+        backgroundColor: '#121212',
+        scale: 2,
+        useCORS: true,
+      })
+      const link = document.createElement('a')
+      const fileName = scaleName.trim()
+        ? `${scaleName.trim().replace(/[^a-zA-Z0-9#\s-]/g, '_')}.png`
+        : 'escala-guitarra.png'
+      link.download = fileName
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+    } catch (err) {
+      console.error('Erro ao gerar imagem:', err)
+    }
+  }, [scaleName])
 
   const handleCancelSelection = useCallback(() => {
     setActiveCell(null)
@@ -145,6 +167,7 @@ function App() {
         totalFrets={totalFrets}
         setTotalFrets={setTotalFrets}
         onClearAll={handleClearAll}
+        onDownload={handleDownload}
         markerCount={Object.keys(markers).length}
       />
 
@@ -158,15 +181,23 @@ function App() {
         />
       </div>
 
-      <div className="fretboard-container">
-        <GuitarFretboard
-          markers={markers}
-          activeCell={activeCell}
-          startingFret={startingFret}
-          totalFrets={totalFrets}
-          onCellClick={handleCellClick}
-        />
-      </div>
+      <div ref={captureRef} className="capture-area">
+        {scaleName.trim() && (
+          <div className="scale-name-display">
+            <h2>{scaleName}</h2>
+          </div>
+        )}
+
+        <div className="fretboard-container">
+          <GuitarFretboard
+            markers={markers}
+            activeCell={activeCell}
+            startingFret={startingFret}
+            totalFrets={totalFrets}
+            onCellClick={handleCellClick}
+          />
+        </div>
+      </div> {/* end capture-area */}
 
       {activeCell && (
         <div className="input-hint">

@@ -100,6 +100,23 @@
   cursor: not-allowed;
 }
 
+.download-btn {
+  background: #1565c0;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.download-btn:hover {
+  background: #1e88e5;
+  transform: scale(1.02);
+}
+
 .marker-count {
   font-size: 13px;
   color: #888;

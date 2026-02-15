@@ -1,7 +1,7 @@
 import React from 'react'
 import './Controls.css'
 
-function Controls({ startingFret, setStartingFret, totalFrets, setTotalFrets, onClearAll, markerCount }) {
+function Controls({ startingFret, setStartingFret, totalFrets, setTotalFrets, onClearAll, onDownload, markerCount }) {
   return (
     <div className="controls">
       <div className="control-group">
@@ -76,6 +76,12 @@ function Controls({ startingFret, setStartingFret, totalFrets, setTotalFrets, on
           disabled={markerCount === 0}
         >
           🗑️ Limpar Tudo
+        </button>
+        <button
+          className="download-btn"
+          onClick={onDownload}
+        >
+          📥 Download
         </button>
       </div>
     </div>

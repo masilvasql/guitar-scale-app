@@ -30,6 +30,25 @@
   padding: 10px 0;
 }
 
+/* Capture area for screenshot */
+.capture-area {
+  background: #121212;
+  padding: 16px 10px 20px;
+}
+
+.scale-name-display {
+  text-align: center;
+  padding: 8px 20px 4px;
+}
+
+.scale-name-display h2 {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
 /* Scale name input */
 .scale-name-container {
   max-width: 900px;
