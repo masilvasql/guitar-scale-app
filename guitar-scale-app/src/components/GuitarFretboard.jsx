@@ -36,6 +36,7 @@ function getMarkerColor(marker) {
   if (!marker) return '#666'
   if (marker.type === 'finger') return FINGER_COLORS[marker.value] || '#666'
   if (marker.type === 'note') return NOTE_COLORS[marker.value] || '#666'
+  if (marker.type === 'fret') return '#607d8b'
   return '#666'
 }
 
@@ -48,14 +49,14 @@ function getMarkerLabel(marker) {
 const INLAY_FRETS = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24]
 const DOUBLE_INLAY_FRETS = [12, 24]
 
-function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCellClick }) {
+function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCellClick, hideFretNumbers }) {
   const frets = Array.from({ length: totalFrets }, (_, i) => i)
   const strings = Array.from({ length: 6 }, (_, i) => i)
 
   return (
     <div className="fretboard-wrapper">
       {/* String labels on the left */}
-      <div className="string-labels">
+      <div className="string-labels" style={{ paddingTop: hideFretNumbers ? '15px' : '52px' }}>
         {strings.map(s => (
           <div key={s} className="string-label">
             {STRING_NAMES[s]}
@@ -65,13 +66,15 @@ function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCell
 
       <div className="fretboard">
         {/* Fret numbers on top */}
-        <div className="fret-numbers">
-          {frets.map(f => (
-            <div key={f} className="fret-number">
-              {f + startingFret}
-            </div>
-          ))}
-        </div>
+        {!hideFretNumbers && (
+          <div className="fret-numbers">
+            {frets.map(f => (
+              <div key={f} className="fret-number">
+                {f + startingFret}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Inlay dots */}
         <div className="inlay-row">
@@ -122,7 +125,7 @@ function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCell
                   {/* Value marker */}
                   {hasMarker && (
                     <div
-                      className={`marker value-marker ${marker.type === 'note' ? 'note-marker' : 'finger-marker'}`}
+                      className={`marker value-marker ${marker.type === 'note' ? 'note-marker' : marker.type === 'fret' ? 'fret-num-marker' : 'finger-marker'}`}
                       style={{ backgroundColor: getMarkerColor(marker) }}
                     >
                       <span>{getMarkerLabel(marker)}</span>

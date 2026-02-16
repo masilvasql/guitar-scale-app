@@ -8,15 +8,20 @@ const VALID_NOTES = ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G'
 const NOTE_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
 
 function App() {
-  // markers: { [key]: { type: 'finger', value: 1-6 } | { type: 'note', value: 'A#' } }
+  // markers: { [key]: { type: 'finger'|'note'|'fret', value: ... } }
   const [markers, setMarkers] = useState({})
   const [startingFret, setStartingFret] = useState(1)
   const [activeCell, setActiveCell] = useState(null)
   const [totalFrets, setTotalFrets] = useState(12)
   const [scaleName, setScaleName] = useState('')
   const [pendingNote, setPendingNote] = useState(null) // letter waiting for # or b
+  const [pendingFretDigits, setPendingFretDigits] = useState('') // accumulates digits for fret number
   const pendingTimerRef = useRef(null)
+  const fretDigitTimerRef = useRef(null)
   const captureRef = useRef(null)
+
+  // Check if any marker is a fret number
+  const hasFretNumbers = Object.values(markers).some(m => m.type === 'fret')
 
   const handleCellClick = useCallback((stringIndex, fretIndex) => {
     const key = `${stringIndex}-${fretIndex}`
@@ -58,10 +63,18 @@ function App() {
     }
   }, [activeCell, setMarkerValue])
 
+  const handleFretNumberInput = useCallback((num) => {
+    if (activeCell) {
+      setMarkerValue({ type: 'fret', value: num })
+      setPendingFretDigits('')
+    }
+  }, [activeCell, setMarkerValue])
+
   const handleClearAll = useCallback(() => {
     setMarkers({})
     setActiveCell(null)
     setPendingNote(null)
+    setPendingFretDigits('')
   }, [])
 
   const handleDownload = useCallback(async () => {
@@ -87,6 +100,7 @@ function App() {
   const handleCancelSelection = useCallback(() => {
     setActiveCell(null)
     setPendingNote(null)
+    setPendingFretDigits('')
   }, [])
 
   // Confirm a pending note (natural, without modifier)
@@ -103,7 +117,6 @@ function App() {
       // If there's a pending note, check for # or b modifier
       if (pendingNote) {
         if (e.key === '#' || e.key === '3') {
-          // # (shift+3 on many keyboards)
           clearTimeout(pendingTimerRef.current)
           const sharpNote = pendingNote + '#'
           if (VALID_NOTES.includes(sharpNote)) {
@@ -122,28 +135,83 @@ function App() {
           }
           return
         } else {
-          // Any other key: confirm the natural note first
           clearTimeout(pendingTimerRef.current)
           confirmPendingNote(pendingNote)
           return
         }
       }
 
-      const num = parseInt(e.key)
-      if (num >= 1 && num <= 6) {
-        handleFingerInput(num)
-      } else if (e.key === 'Escape') {
+      // If accumulating fret digits
+      if (pendingFretDigits !== '') {
+        const digit = e.key
+        if (digit >= '0' && digit <= '9') {
+          clearTimeout(fretDigitTimerRef.current)
+          const newDigits = pendingFretDigits + digit
+          const num = parseInt(newDigits)
+          if (num > 24) {
+            // Too big, confirm what we had
+            handleFretNumberInput(parseInt(pendingFretDigits))
+            return
+          }
+          setPendingFretDigits(newDigits)
+          fretDigitTimerRef.current = setTimeout(() => {
+            handleFretNumberInput(parseInt(newDigits))
+          }, 600)
+          return
+        } else if (e.key === 'Enter') {
+          clearTimeout(fretDigitTimerRef.current)
+          handleFretNumberInput(parseInt(pendingFretDigits))
+          return
+        } else if (e.key === 'Escape') {
+          clearTimeout(fretDigitTimerRef.current)
+          setPendingFretDigits('')
+          handleCancelSelection()
+          return
+        }
+        return
+      }
+
+      if (e.key === 'Escape') {
         handleCancelSelection()
-      } else {
-        // Check for note letter
-        const letter = e.key.toUpperCase()
-        if (NOTE_LETTERS.includes(letter)) {
-          setPendingNote(letter)
-          // Auto-confirm after 800ms if no modifier is pressed
-          clearTimeout(pendingTimerRef.current)
-          pendingTimerRef.current = setTimeout(() => {
-            confirmPendingNote(letter)
-          }, 800)
+        return
+      }
+
+      // If fret numbers already exist, only allow digits (no notes or fingers)
+      if (hasFretNumbers) {
+        const digit = e.key
+        if (digit >= '0' && digit <= '9') {
+          setPendingFretDigits(digit)
+          fretDigitTimerRef.current = setTimeout(() => {
+            handleFretNumberInput(parseInt(digit))
+          }, 600)
+        }
+        return
+      }
+
+      // Check for note letter first (before digit check, since A-G are not digits)
+      const letter = e.key.toUpperCase()
+      if (NOTE_LETTERS.includes(letter)) {
+        setPendingNote(letter)
+        clearTimeout(pendingTimerRef.current)
+        pendingTimerRef.current = setTimeout(() => {
+          confirmPendingNote(letter)
+        }, 800)
+        return
+      }
+
+      // Check for digit — could be finger (1-6) or start of fret number (0-9)
+      const digit = e.key
+      if (digit >= '0' && digit <= '9') {
+        const num = parseInt(digit)
+        // 0 is always a fret number, 7-9 start fret number input
+        if (num === 0 || num > 6) {
+          setPendingFretDigits(digit)
+          fretDigitTimerRef.current = setTimeout(() => {
+            handleFretNumberInput(num)
+          }, 600)
+        } else {
+          // 1-6: could be finger or fret number, treat as finger
+          handleFingerInput(num)
         }
       }
     }
@@ -151,8 +219,9 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
       clearTimeout(pendingTimerRef.current)
+      clearTimeout(fretDigitTimerRef.current)
     }
-  }, [activeCell, pendingNote, handleFingerInput, handleNoteInput, handleCancelSelection, confirmPendingNote])
+  }, [activeCell, pendingNote, pendingFretDigits, hasFretNumbers, handleFingerInput, handleFretNumberInput, handleNoteInput, handleCancelSelection, confirmPendingNote])
 
   return (
     <div className="app">
@@ -169,6 +238,7 @@ function App() {
         onClearAll={handleClearAll}
         onDownload={handleDownload}
         markerCount={Object.keys(markers).length}
+        fretNumbersLocked={hasFretNumbers}
       />
 
       <div className="scale-name-container">
@@ -195,6 +265,7 @@ function App() {
             startingFret={startingFret}
             totalFrets={totalFrets}
             onCellClick={handleCellClick}
+            hideFretNumbers={hasFretNumbers}
           />
         </div>
       </div> {/* end capture-area */}
@@ -206,61 +277,84 @@ function App() {
             
             {pendingNote ? (
               <p>Nota <strong>{pendingNote}</strong> — pressione <strong>#</strong> (sustenido), <strong>b</strong> (bemol) ou <strong>Enter</strong> para natural</p>
+            ) : pendingFretDigits !== '' ? (
+              <p>Casa <strong>{pendingFretDigits}</strong> — digite mais dígitos ou aguarde para confirmar</p>
+            ) : hasFretNumbers ? (
+              <p>Digite o <strong>número da casa</strong> (0–24) ou <strong>ESC</strong> para cancelar</p>
             ) : (
-              <p>Digite <strong>1–6</strong> (dedo) ou <strong>A–G</strong> (cifra), ou <strong>ESC</strong> para cancelar</p>
+              <p>Digite <strong>1–6</strong> (dedo), <strong>A–G</strong> (cifra), <strong>0–9</strong> (nº casa), ou <strong>ESC</strong> para cancelar</p>
             )}
 
-            {!pendingNote && (
+            {!pendingNote && pendingFretDigits === '' && (
               <>
+                {!hasFretNumbers && (
+                  <>
+                    <div className="input-section">
+                      <span className="section-label">Dedos:</span>
+                      <div className="finger-buttons">
+                        {[1, 2, 3, 4, 5, 6].map(n => (
+                          <button
+                            key={n}
+                            className="finger-btn"
+                            onClick={() => handleFingerInput(n)}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="input-section">
+                      <span className="section-label">Cifras:</span>
+                      <div className="note-buttons">
+                        {['C', 'D', 'E', 'F', 'G', 'A', 'B'].map(letter => (
+                          <div key={letter} className="note-group">
+                            <button
+                              className="note-btn note-natural"
+                              onClick={() => handleNoteInput(letter)}
+                            >
+                              {letter}
+                            </button>
+                            {['E', 'B'].includes(letter) ? null : (
+                              <button
+                                className="note-btn note-sharp"
+                                onClick={() => handleNoteInput(letter + '#')}
+                              >
+                                {letter}#
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="input-section">
+                      <span className="section-label">Bemóis:</span>
+                      <div className="note-buttons">
+                        {['Db', 'Eb', 'Gb', 'Ab', 'Bb'].map(note => (
+                          <button
+                            key={note}
+                            className="note-btn note-flat"
+                            onClick={() => handleNoteInput(note)}
+                          >
+                            {note}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
                 <div className="input-section">
-                  <span className="section-label">Dedos:</span>
-                  <div className="finger-buttons">
-                    {[1, 2, 3, 4, 5, 6].map(n => (
+                  <span className="section-label">Casas:</span>
+                  <div className="fret-number-buttons">
+                    {Array.from({ length: 25 }, (_, i) => i).map(n => (
                       <button
                         key={n}
-                        className="finger-btn"
-                        onClick={() => handleFingerInput(n)}
+                        className="note-btn fret-num-btn"
+                        onClick={() => handleFretNumberInput(n)}
                       >
                         {n}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="input-section">
-                  <span className="section-label">Cifras:</span>
-                  <div className="note-buttons">
-                    {['C', 'D', 'E', 'F', 'G', 'A', 'B'].map(letter => (
-                      <div key={letter} className="note-group">
-                        <button
-                          className="note-btn note-natural"
-                          onClick={() => handleNoteInput(letter)}
-                        >
-                          {letter}
-                        </button>
-                        {['E', 'B'].includes(letter) ? null : (
-                          <button
-                            className="note-btn note-sharp"
-                            onClick={() => handleNoteInput(letter + '#')}
-                          >
-                            {letter}#
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="input-section">
-                  <span className="section-label">Bemóis:</span>
-                  <div className="note-buttons">
-                    {['Db', 'Eb', 'Gb', 'Ab', 'Bb'].map(note => (
-                      <button
-                        key={note}
-                        className="note-btn note-flat"
-                        onClick={() => handleNoteInput(note)}
-                      >
-                        {note}
                       </button>
                     ))}
                   </div>

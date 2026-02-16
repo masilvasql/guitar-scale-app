@@ -1,16 +1,16 @@
 import React from 'react'
 import './Controls.css'
 
-function Controls({ startingFret, setStartingFret, totalFrets, setTotalFrets, onClearAll, onDownload, markerCount }) {
+function Controls({ startingFret, setStartingFret, totalFrets, setTotalFrets, onClearAll, onDownload, markerCount, fretNumbersLocked }) {
   return (
     <div className="controls">
-      <div className="control-group">
+      <div className={`control-group ${fretNumbersLocked ? 'locked' : ''}`}>
         <label htmlFor="starting-fret">Casa Inicial:</label>
         <div className="input-with-buttons">
           <button
             className="ctrl-btn"
             onClick={() => setStartingFret(Math.max(1, startingFret - 1))}
-            disabled={startingFret <= 1}
+            disabled={startingFret <= 1 || fretNumbersLocked}
           >
             −
           </button>
@@ -20,6 +20,7 @@ function Controls({ startingFret, setStartingFret, totalFrets, setTotalFrets, on
             min="1"
             max="24"
             value={startingFret}
+            disabled={fretNumbersLocked}
             onChange={(e) => {
               const val = parseInt(e.target.value)
               if (val >= 1 && val <= 24) setStartingFret(val)
@@ -28,11 +29,12 @@ function Controls({ startingFret, setStartingFret, totalFrets, setTotalFrets, on
           <button
             className="ctrl-btn"
             onClick={() => setStartingFret(Math.min(24, startingFret + 1))}
-            disabled={startingFret >= 24}
+            disabled={startingFret >= 24 || fretNumbersLocked}
           >
             +
           </button>
         </div>
+        {fretNumbersLocked && <span className="lock-badge">🔒</span>}
       </div>
 
       <div className="control-group">

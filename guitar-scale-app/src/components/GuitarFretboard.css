@@ -190,8 +190,25 @@
   letter-spacing: 0.5px;
 }
 
+/* Fret number marker */
+.fret-num-marker {
+  width: auto;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 14px;
+  padding: 0 5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  transition: transform 0.2s ease;
+}
+
+.fret-num-marker span {
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
 .fret-cell:hover .finger-marker,
-.fret-cell:hover .note-marker {
+.fret-cell:hover .note-marker,
+.fret-cell:hover .fret-num-marker {
   transform: translate(-50%, -50%) scale(1.15);
 }
 

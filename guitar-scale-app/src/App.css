@@ -223,6 +223,27 @@
   transform: scale(1.1);
 }
 
+/* Fret number buttons */
+.fret-number-buttons {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 500px;
+}
+
+.fret-num-btn {
+  background: #263238 !important;
+  border-color: #607d8b !important;
+  min-width: 32px !important;
+  font-size: 12px !important;
+}
+
+.fret-num-btn:hover {
+  background: #607d8b !important;
+  transform: scale(1.1);
+}
+
 /* Modifier buttons (when pending note) */
 .modifier-buttons {
   display: flex;
