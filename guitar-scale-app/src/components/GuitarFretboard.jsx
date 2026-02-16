@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef, useCallback } from 'react'
 import './GuitarFretboard.css'
 
 const STRING_NAMES = ['E (1ª)', 'B (2ª)', 'G (3ª)', 'D (4ª)', 'A (5ª)', 'E (6ª)']
@@ -32,11 +32,14 @@ const NOTE_COLORS = {
   'B': '#673ab7',
 }
 
-function getMarkerColor(marker) {
+const DEFAULT_COLORIR_COLOR = '#2196F3'
+
+function getMarkerColor(marker, colorMode) {
   if (!marker) return '#666'
+  if (colorMode === 'colorir') return marker.color || DEFAULT_COLORIR_COLOR
   if (marker.type === 'finger') return FINGER_COLORS[marker.value] || '#666'
   if (marker.type === 'note') return NOTE_COLORS[marker.value] || '#666'
-  if (marker.type === 'fret') return '#607d8b'
+  if (marker.type === 'fret') return marker.color || '#607d8b'
   return '#666'
 }
 
@@ -49,9 +52,32 @@ function getMarkerLabel(marker) {
 const INLAY_FRETS = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24]
 const DOUBLE_INLAY_FRETS = [12, 24]
 
-function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCellClick, hideFretNumbers }) {
+function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCellClick, onCellContextMenu, hideFretNumbers, colorMode }) {
   const frets = Array.from({ length: totalFrets }, (_, i) => i)
   const strings = Array.from({ length: 6 }, (_, i) => i)
+  const longPressTimerRef = useRef(null)
+  const longPressTriggeredRef = useRef(false)
+
+  const handleTouchStart = useCallback((key, e) => {
+    longPressTriggeredRef.current = false
+    longPressTimerRef.current = setTimeout(() => {
+      longPressTriggeredRef.current = true
+      const touch = e.touches[0]
+      onCellContextMenu(key, {
+        preventDefault: () => {},
+        clientX: touch.clientX,
+        clientY: touch.clientY
+      })
+    }, 500)
+  }, [onCellContextMenu])
+
+  const handleTouchEnd = useCallback(() => {
+    clearTimeout(longPressTimerRef.current)
+  }, [])
+
+  const handleTouchMove = useCallback(() => {
+    clearTimeout(longPressTimerRef.current)
+  }, [])
 
   return (
     <div className="fretboard-wrapper">
@@ -109,7 +135,30 @@ function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCell
                 <div
                   key={fretIndex}
                   className={`fret-cell ${isActive ? 'active' : ''} ${hasMarker ? 'marked' : ''}`}
-                  onClick={() => onCellClick(stringIndex, fretIndex)}
+                  onClick={(e) => {
+                    if (longPressTriggeredRef.current) {
+                      longPressTriggeredRef.current = false
+                      return
+                    }
+                    onCellClick(stringIndex, fretIndex)
+                  }}
+                  onContextMenu={(e) => {
+                    if (marker) {
+                      if (colorMode === 'colorir' || marker.type === 'fret') {
+                        e.preventDefault()
+                        onCellContextMenu(key, e)
+                      }
+                    }
+                  }}
+                  onTouchStart={(e) => {
+                    if (marker) {
+                      if (colorMode === 'colorir' || marker.type === 'fret') {
+                        handleTouchStart(key, e)
+                      }
+                    }
+                  }}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchMove={handleTouchMove}
                   title={`Corda ${stringIndex + 1}, Casa ${fretIndex + startingFret}`}
                 >
                   {/* The string wire */}
@@ -126,7 +175,7 @@ function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCell
                   {hasMarker && (
                     <div
                       className={`marker value-marker ${marker.type === 'note' ? 'note-marker' : marker.type === 'fret' ? 'fret-num-marker' : 'finger-marker'}`}
-                      style={{ backgroundColor: getMarkerColor(marker) }}
+                      style={{ backgroundColor: getMarkerColor(marker, colorMode) }}
                     >
                       <span>{getMarkerLabel(marker)}</span>
                     </div>

@@ -16,6 +16,9 @@ function App() {
   const [scaleName, setScaleName] = useState('')
   const [pendingNote, setPendingNote] = useState(null) // letter waiting for # or b
   const [pendingFretDigits, setPendingFretDigits] = useState('') // accumulates digits for fret number
+  const [colorPickerCell, setColorPickerCell] = useState(null)
+  const [colorPickerPos, setColorPickerPos] = useState({ x: 0, y: 0 })
+  const [colorMode, setColorMode] = useState('padrao') // 'padrao' | 'colorir'
   const pendingTimerRef = useRef(null)
   const fretDigitTimerRef = useRef(null)
   const captureRef = useRef(null)
@@ -70,11 +73,35 @@ function App() {
     }
   }, [activeCell, setMarkerValue])
 
+  const handleCellContextMenu = useCallback((cellKey, event) => {
+    const marker = markers[cellKey]
+    if (marker) {
+      // In 'colorir' mode, allow color change on any marker type
+      // In 'padrao' mode, only allow on fret markers
+      if (colorMode === 'colorir' || marker.type === 'fret') {
+        event.preventDefault()
+        setColorPickerCell(cellKey)
+        setColorPickerPos({ x: event.clientX, y: event.clientY })
+      }
+    }
+  }, [markers, colorMode])
+
+  const handleColorSelect = useCallback((color) => {
+    if (colorPickerCell) {
+      setMarkers(prev => ({
+        ...prev,
+        [colorPickerCell]: { ...prev[colorPickerCell], color }
+      }))
+      setColorPickerCell(null)
+    }
+  }, [colorPickerCell])
+
   const handleClearAll = useCallback(() => {
     setMarkers({})
     setActiveCell(null)
     setPendingNote(null)
     setPendingFretDigits('')
+    setColorPickerCell(null)
   }, [])
 
   const handleDownload = useCallback(async () => {
@@ -241,6 +268,27 @@ function App() {
         fretNumbersLocked={hasFretNumbers}
       />
 
+      <div className="mode-toggle-container">
+        <span className="mode-toggle-label">Modo de cor:</span>
+        <div className="mode-toggle">
+          <button
+            className={`mode-toggle-btn ${colorMode === 'padrao' ? 'active' : ''}`}
+            onClick={() => setColorMode('padrao')}
+          >
+            Padrão
+          </button>
+          <button
+            className={`mode-toggle-btn ${colorMode === 'colorir' ? 'active' : ''}`}
+            onClick={() => setColorMode('colorir')}
+          >
+            🎨 Colorir
+          </button>
+        </div>
+        {colorMode === 'colorir' && (
+          <span className="mode-hint">Clique direito (ou segure no celular) para trocar a cor</span>
+        )}
+      </div>
+
       <div className="scale-name-container">
         <input
           type="text"
@@ -265,7 +313,9 @@ function App() {
             startingFret={startingFret}
             totalFrets={totalFrets}
             onCellClick={handleCellClick}
+            onCellContextMenu={handleCellContextMenu}
             hideFretNumbers={hasFretNumbers}
+            colorMode={colorMode}
           />
         </div>
       </div> {/* end capture-area */}
@@ -409,6 +459,34 @@ function App() {
           </div>
         </div>
       </div>
+
+      {colorPickerCell && (
+        <div className="color-picker-overlay" onClick={() => setColorPickerCell(null)}>
+          <div
+            className="color-picker-popup"
+            style={{ top: colorPickerPos.y, left: colorPickerPos.x }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="color-picker-title">Escolha uma cor</p>
+            <div className="color-picker-grid">
+              {[
+                '#607d8b', '#2196F3', '#4CAF50', '#FF9800',
+                '#F44336', '#9C27B0', '#00BCD4', '#E91E63',
+                '#FF5722', '#795548', '#3F51B5', '#009688',
+                '#CDDC39', '#FFC107', '#8BC34A', '#673AB7'
+              ].map(color => (
+                <button
+                  key={color}
+                  className={`color-swatch ${markers[colorPickerCell]?.color === color ? 'active' : ''}`}
+                  style={{ backgroundColor: color }}
+                  onClick={() => handleColorSelect(color)}
+                  title={color}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="app-footer">
         <span>Powered by <strong>Marcelo Abrão da Silva</strong></span>

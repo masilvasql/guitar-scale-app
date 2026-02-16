@@ -56,6 +56,62 @@
   padding: 0 20px;
 }
 
+/* Mode toggle (Padrão | Colorir) */
+.mode-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 12px auto 0;
+  flex-wrap: wrap;
+}
+
+.mode-toggle-label {
+  color: #aaa;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mode-toggle {
+  display: flex;
+  background: #1a1a2e;
+  border: 2px solid #333;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.mode-toggle-btn {
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #888;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.mode-toggle-btn:hover {
+  color: #ccc;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mode-toggle-btn.active {
+  color: #fff;
+  background: #2196F3;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+.mode-hint {
+  width: 100%;
+  text-align: center;
+  color: #666;
+  font-size: 12px;
+  font-style: italic;
+  margin-top: 2px;
+}
+
 .scale-name-input {
   width: 100%;
   padding: 14px 20px;
@@ -371,6 +427,79 @@
   border-top: 1px solid #2a2a2a;
   color: #888;
   font-size: 14px;
+}
+
+/* Color picker overlay & popup */
+.color-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.color-picker-popup {
+  position: fixed;
+  transform: translate(-50%, -120%);
+  background: #1e293b;
+  border: 2px solid #334155;
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  z-index: 201;
+  min-width: 180px;
+  animation: colorPickerIn 0.15s ease;
+}
+
+.color-picker-title {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px;
+  text-align: center;
+}
+
+.color-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+  padding: 0;
+  outline: none;
+}
+
+.color-swatch:hover {
+  transform: scale(1.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.color-swatch.active {
+  border-color: #fff;
+  transform: scale(1.15);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+}
+
+@keyframes colorPickerIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -110%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -120%) scale(1);
+  }
 }
 
 .app-footer strong {
