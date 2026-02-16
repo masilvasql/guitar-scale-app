@@ -25,6 +25,43 @@
   font-weight: 600;
   color: #ccc;
   white-space: nowrap;
+  gap: 6px;
+  user-select: none;
+}
+
+.string-label.clickable {
+  cursor: pointer;
+}
+
+.string-label.clickable:hover .open-string-note {
+  border-color: rgba(66, 165, 245, 0.5);
+}
+
+.open-string-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  color: #aaa;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.open-string-note.active {
+  color: #fff;
+  background-color: #1976D2;
+  border-color: #42A5F5;
+  box-shadow: 0 0 8px rgba(33, 150, 243, 0.5);
+}
+
+.string-label-text {
+  min-width: 42px;
+  text-align: right;
 }
 
 .fretboard {

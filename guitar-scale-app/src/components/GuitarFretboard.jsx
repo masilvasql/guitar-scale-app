@@ -2,6 +2,7 @@ import React, { useRef, useCallback } from 'react'
 import './GuitarFretboard.css'
 
 const STRING_NAMES = ['E (1ª)', 'B (2ª)', 'G (3ª)', 'D (4ª)', 'A (5ª)', 'E (6ª)']
+const OPEN_STRING_NOTES = ['E', 'B', 'G', 'D', 'A', 'E']
 
 const FINGER_COLORS = {
   1: '#2196F3', // Azul
@@ -52,7 +53,7 @@ function getMarkerLabel(marker) {
 const INLAY_FRETS = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24]
 const DOUBLE_INLAY_FRETS = [12, 24]
 
-function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCellClick, onCellContextMenu, hideFretNumbers, colorMode }) {
+function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCellClick, onCellContextMenu, hideFretNumbers, colorMode, openStrings, onOpenStringToggle, allowOpenStrings }) {
   const frets = Array.from({ length: totalFrets }, (_, i) => i)
   const strings = Array.from({ length: 6 }, (_, i) => i)
   const longPressTimerRef = useRef(null)
@@ -83,11 +84,20 @@ function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCell
     <div className="fretboard-wrapper">
       {/* String labels on the left */}
       <div className="string-labels" style={{ paddingTop: hideFretNumbers ? '15px' : '52px' }}>
-        {strings.map(s => (
-          <div key={s} className="string-label">
-            {STRING_NAMES[s]}
-          </div>
-        ))}
+        {strings.map(s => {
+          const isOpen = openStrings && openStrings.has(s)
+          return (
+            <div
+              key={s}
+              className={`string-label ${allowOpenStrings ? 'clickable' : ''}`}
+              onClick={() => allowOpenStrings && onOpenStringToggle && onOpenStringToggle(s)}
+            >
+              <span className={`open-string-note ${isOpen ? 'active' : ''}`}>
+                {OPEN_STRING_NOTES[s]}
+              </span>
+            </div>
+          )
+        })}
       </div>
 
       <div className="fretboard">

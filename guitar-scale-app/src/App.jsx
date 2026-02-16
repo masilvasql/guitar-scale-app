@@ -19,6 +19,7 @@ function App() {
   const [colorPickerCell, setColorPickerCell] = useState(null)
   const [colorPickerPos, setColorPickerPos] = useState({ x: 0, y: 0 })
   const [colorMode, setColorMode] = useState('padrao') // 'padrao' | 'colorir'
+  const [openStrings, setOpenStrings] = useState(new Set()) // indices of open strings marked
   const pendingTimerRef = useRef(null)
   const fretDigitTimerRef = useRef(null)
   const captureRef = useRef(null)
@@ -96,12 +97,25 @@ function App() {
     }
   }, [colorPickerCell])
 
+  const handleOpenStringToggle = useCallback((stringIndex) => {
+    setOpenStrings(prev => {
+      const next = new Set(prev)
+      if (next.has(stringIndex)) {
+        next.delete(stringIndex)
+      } else {
+        next.add(stringIndex)
+      }
+      return next
+    })
+  }, [])
+
   const handleClearAll = useCallback(() => {
     setMarkers({})
     setActiveCell(null)
     setPendingNote(null)
     setPendingFretDigits('')
     setColorPickerCell(null)
+    setOpenStrings(new Set())
   }, [])
 
   const handleDownload = useCallback(async () => {
@@ -316,6 +330,9 @@ function App() {
             onCellContextMenu={handleCellContextMenu}
             hideFretNumbers={hasFretNumbers}
             colorMode={colorMode}
+            openStrings={openStrings}
+            onOpenStringToggle={handleOpenStringToggle}
+            allowOpenStrings={!hasFretNumbers}
           />
         </div>
       </div> {/* end capture-area */}
