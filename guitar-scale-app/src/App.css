@@ -360,6 +360,40 @@
   border-radius: 13px;
 }
 
+/* Footer */
+.app-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 20px;
+  margin-top: 30px;
+  border-top: 1px solid #2a2a2a;
+  color: #888;
+  font-size: 14px;
+}
+
+.app-footer strong {
+  color: #ccc;
+}
+
+.github-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #888;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.github-link:hover {
+  color: #fff;
+}
+
+.github-link svg {
+  flex-shrink: 0;
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
