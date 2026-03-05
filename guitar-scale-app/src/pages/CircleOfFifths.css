@@ -1,0 +1,287 @@
+.cof-page {
+  min-height: 100vh;
+  padding: 20px;
+  background: #121212;
+}
+
+.cof-header {
+  text-align: center;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.cof-header h1 {
+  font-size: 2rem;
+  margin: 0;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.cof-subtitle {
+  color: #888;
+  font-size: 14px;
+  margin: 6px 0 0;
+}
+
+.back-button {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #1a1a2e;
+  border: 2px solid #333;
+  border-radius: 10px;
+  color: #ccc;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.back-button:hover {
+  border-color: #2196F3;
+  color: #fff;
+  background: rgba(33, 150, 243, 0.1);
+}
+
+/* Controls */
+.cof-controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 20px auto 0;
+  flex-wrap: wrap;
+}
+
+.cof-btn {
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 2px solid #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.cof-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cof-btn-clear {
+  background: #1a1a2e;
+  color: #ff6b6b;
+  border-color: #ff6b6b44;
+}
+
+.cof-btn-clear:not(:disabled):hover {
+  background: #ff6b6b22;
+  border-color: #ff6b6b;
+}
+
+.cof-btn-download {
+  background: #1a1a2e;
+  color: #4CAF50;
+  border-color: #4CAF5044;
+}
+
+.cof-btn-download:not(:disabled):hover {
+  background: #4CAF5022;
+  border-color: #4CAF50;
+}
+
+/* Name input */
+.cof-name-container {
+  max-width: 900px;
+  margin: 16px auto 0;
+  padding: 0 20px;
+}
+
+.cof-name-input {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+  background: #1a1a2e;
+  border: 2px solid #333;
+  border-radius: 12px;
+  outline: none;
+  text-align: center;
+  letter-spacing: 0.5px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.cof-name-input::placeholder {
+  color: #555;
+  font-weight: 400;
+  font-size: 16px;
+}
+
+.cof-name-input:focus {
+  border-color: #2196F3;
+  box-shadow: 0 0 16px rgba(33, 150, 243, 0.2);
+}
+
+/* Capture area */
+.cof-capture-area {
+  background: #121212;
+  padding: 20px 10px;
+  max-width: 950px;
+  margin: 0 auto;
+}
+
+.cof-table-title {
+  text-align: center;
+  padding: 8px 20px 12px;
+}
+
+.cof-table-title h2 {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+/* Table */
+.cof-table-wrapper {
+  overflow-x: auto;
+  padding: 0 10px;
+}
+
+.cof-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.cof-table thead th {
+  background: #1e293b;
+  color: #93c5fd;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 12px 16px;
+  text-align: center;
+  border: 1px solid #334155;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.cof-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.cof-table tbody tr:hover {
+  background: rgba(33, 150, 243, 0.05);
+}
+
+.cof-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.cof-table tbody tr:nth-child(even):hover {
+  background: rgba(33, 150, 243, 0.07);
+}
+
+.cof-row-number {
+  width: 40px;
+  text-align: center;
+  color: #555;
+  font-weight: 600;
+  font-size: 13px;
+  background: #161625 !important;
+  border: 1px solid #2a2a3e;
+  padding: 0 8px;
+}
+
+.cof-cell {
+  border: 1px solid #2a2a3e;
+  padding: 0;
+}
+
+.cof-cell-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  background: transparent;
+  border: none;
+  outline: none;
+  text-align: center;
+  font-family: inherit;
+  transition: background 0.15s ease;
+  box-sizing: border-box;
+}
+
+.cof-cell-input::placeholder {
+  color: #333;
+  font-weight: 400;
+}
+
+.cof-cell-input:focus {
+  background: rgba(33, 150, 243, 0.12);
+  box-shadow: inset 0 0 0 2px #2196F3;
+}
+
+/* Footer */
+.cof-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 20px;
+  margin-top: 30px;
+  border-top: 1px solid #2a2a2a;
+  color: #888;
+  font-size: 14px;
+}
+
+.cof-footer strong {
+  color: #ccc;
+}
+
+.cof-footer .github-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #888;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.cof-footer .github-link:hover {
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .back-button {
+    position: static;
+    transform: none;
+    margin: 0 auto 16px;
+  }
+
+  .cof-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .cof-table thead th {
+    font-size: 12px;
+    padding: 10px 8px;
+  }
+
+  .cof-cell-input {
+    font-size: 14px;
+    padding: 8px 6px;
+  }
+}

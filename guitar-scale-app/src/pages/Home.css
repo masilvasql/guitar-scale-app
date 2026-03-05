@@ -1,0 +1,139 @@
+.home {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #121212;
+  padding: 40px 20px;
+}
+
+.home-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.home-header h1 {
+  font-size: 2.5rem;
+  color: #fff;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.home-subtitle {
+  color: #888;
+  font-size: 16px;
+  margin: 10px 0 0;
+}
+
+.cards-container {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 800px;
+}
+
+.feature-card {
+  background: #1a1a2e;
+  border: 2px solid #333;
+  border-radius: 20px;
+  padding: 40px 30px;
+  width: 300px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  font-family: inherit;
+}
+
+.feature-card:hover {
+  border-color: #2196F3;
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(33, 150, 243, 0.25);
+}
+
+.feature-card:active {
+  transform: translateY(-2px);
+}
+
+.card-icon {
+  color: #2196F3;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(33, 150, 243, 0.1);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover .card-icon {
+  background: rgba(33, 150, 243, 0.2);
+  transform: scale(1.1);
+}
+
+.card-title {
+  font-size: 1.4rem;
+  color: #fff;
+  margin: 0;
+  font-weight: 700;
+}
+
+.card-description {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.home-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 20px;
+  margin-top: 60px;
+  border-top: 1px solid #2a2a2a;
+  color: #888;
+  font-size: 14px;
+  width: 100%;
+  max-width: 800px;
+}
+
+.home-footer strong {
+  color: #ccc;
+}
+
+.home-footer .github-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #888;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.home-footer .github-link:hover {
+  color: #fff;
+}
+
+@media (max-width: 700px) {
+  .home-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .feature-card {
+    width: 100%;
+    max-width: 340px;
+    padding: 30px 24px;
+  }
+
+  .cards-container {
+    gap: 20px;
+  }
+}
