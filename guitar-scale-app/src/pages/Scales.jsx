@@ -21,6 +21,7 @@ function Scales() {
   const [colorPickerCell, setColorPickerCell] = useState(null)
   const [colorPickerPos, setColorPickerPos] = useState({ x: 0, y: 0 })
   const [colorMode, setColorMode] = useState('padrao')
+  const [instrument, setInstrument] = useState('guitar')
   const [openStrings, setOpenStrings] = useState(new Set())
   const pendingTimerRef = useRef(null)
   const fretDigitTimerRef = useRef(null)
@@ -107,6 +108,17 @@ function Scales() {
     })
   }, [])
 
+  const handleInstrumentChange = useCallback((inst) => {
+    if (inst === instrument) return
+    setInstrument(inst)
+    setMarkers({})
+    setActiveCell(null)
+    setPendingNote(null)
+    setPendingFretDigits('')
+    setColorPickerCell(null)
+    setOpenStrings(new Set())
+  }, [instrument])
+
   const handleClearAll = useCallback(() => {
     setMarkers({})
     setActiveCell(null)
@@ -127,7 +139,7 @@ function Scales() {
       const link = document.createElement('a')
       const fileName = scaleName.trim()
         ? `${scaleName.trim().replace(/[^a-zA-Z0-9#\s-]/g, '_')}.png`
-        : 'escala-guitarra.png'
+        : instrument === 'bass' ? 'escala-baixo.png' : 'escala-guitarra.png'
       link.download = fileName
       link.href = canvas.toDataURL('image/png')
       link.click()
@@ -262,7 +274,7 @@ function Scales() {
           </svg>
           Voltar
         </button>
-        <h1>🎸 Escala de Guitarra</h1>
+        <h1>{instrument === 'bass' ? '🎸 Escala de Baixo' : '🎸 Escala de Guitarra'}</h1>
         <p className="subtitle">Clique nas cordas para marcar os dedos da escala</p>
       </header>
 
@@ -276,6 +288,24 @@ function Scales() {
         markerCount={Object.keys(markers).length}
         fretNumbersLocked={hasFretNumbers}
       />
+
+      <div className="mode-toggle-container">
+        <span className="mode-toggle-label">Instrumento:</span>
+        <div className="mode-toggle">
+          <button
+            className={`mode-toggle-btn ${instrument === 'guitar' ? 'active' : ''}`}
+            onClick={() => handleInstrumentChange('guitar')}
+          >
+            🎸 Guitarra
+          </button>
+          <button
+            className={`mode-toggle-btn ${instrument === 'bass' ? 'active' : ''}`}
+            onClick={() => handleInstrumentChange('bass')}
+          >
+            🎵 Baixo
+          </button>
+        </div>
+      </div>
 
       <div className="mode-toggle-container">
         <span className="mode-toggle-label">Modo de cor:</span>
@@ -328,6 +358,7 @@ function Scales() {
             openStrings={openStrings}
             onOpenStringToggle={handleOpenStringToggle}
             allowOpenStrings={!hasFretNumbers}
+            instrument={instrument}
           />
         </div>
       </div>
