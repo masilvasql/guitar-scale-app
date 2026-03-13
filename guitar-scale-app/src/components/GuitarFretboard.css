@@ -169,6 +169,12 @@
 .wire-4 { height: 3px; background: linear-gradient(180deg, #d4a056, #b8860b); }
 .wire-5 { height: 3.5px; background: linear-gradient(180deg, #d4a056, #b8860b); }
 
+/* Bass string wires */
+.wire-bass-0 { height: 2px; }
+.wire-bass-1 { height: 2.5px; background: linear-gradient(180deg, #d4a056, #b8860b); }
+.wire-bass-2 { height: 3px; background: linear-gradient(180deg, #d4a056, #b8860b); }
+.wire-bass-3 { height: 3.5px; background: linear-gradient(180deg, #d4a056, #b8860b); }
+
 /* Markers */
 .marker {
   position: absolute;

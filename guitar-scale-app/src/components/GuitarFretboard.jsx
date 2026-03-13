@@ -1,8 +1,18 @@
 import React, { useRef, useCallback } from 'react'
 import './GuitarFretboard.css'
 
-const STRING_NAMES = ['E (1ª)', 'B (2ª)', 'G (3ª)', 'D (4ª)', 'A (5ª)', 'E (6ª)']
-const OPEN_STRING_NOTES = ['E', 'B', 'G', 'D', 'A', 'E']
+const INSTRUMENTS = {
+  guitar: {
+    stringCount: 6,
+    stringNames: ['E (1ª)', 'B (2ª)', 'G (3ª)', 'D (4ª)', 'A (5ª)', 'E (6ª)'],
+    openNotes: ['E', 'B', 'G', 'D', 'A', 'E'],
+  },
+  bass: {
+    stringCount: 4,
+    stringNames: ['G (1ª)', 'D (2ª)', 'A (3ª)', 'E (4ª)'],
+    openNotes: ['G', 'D', 'A', 'E'],
+  },
+}
 
 const FINGER_COLORS = {
   1: '#2196F3', // Azul
@@ -53,9 +63,10 @@ function getMarkerLabel(marker) {
 const INLAY_FRETS = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24]
 const DOUBLE_INLAY_FRETS = [12, 24]
 
-function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCellClick, onCellContextMenu, hideFretNumbers, colorMode, openStrings, onOpenStringToggle, allowOpenStrings }) {
+function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCellClick, onCellContextMenu, hideFretNumbers, colorMode, openStrings, onOpenStringToggle, allowOpenStrings, instrument = 'guitar' }) {
+  const config = INSTRUMENTS[instrument] || INSTRUMENTS.guitar
   const frets = Array.from({ length: totalFrets }, (_, i) => i)
-  const strings = Array.from({ length: 6 }, (_, i) => i)
+  const strings = Array.from({ length: config.stringCount }, (_, i) => i)
   const longPressTimerRef = useRef(null)
   const longPressTriggeredRef = useRef(false)
 
@@ -93,7 +104,7 @@ function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCell
               onClick={() => allowOpenStrings && onOpenStringToggle && onOpenStringToggle(s)}
             >
               <span className={`open-string-note ${isOpen ? 'active' : ''}`}>
-                {OPEN_STRING_NOTES[s]}
+                {config.openNotes[s]}
               </span>
             </div>
           )
@@ -134,7 +145,7 @@ function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCell
 
         {/* Guitar strings and frets */}
         {strings.map(stringIndex => (
-          <div key={stringIndex} className={`guitar-string string-${stringIndex}`}>
+          <div key={stringIndex} className={`guitar-string string-${instrument === 'bass' ? 'bass-' : ''}${stringIndex}`}>
             {frets.map(fretIndex => {
               const key = `${stringIndex}-${fretIndex}`
               const marker = markers[key]
@@ -172,7 +183,7 @@ function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCell
                   title={`Corda ${stringIndex + 1}, Casa ${fretIndex + startingFret}`}
                 >
                   {/* The string wire */}
-                  <div className={`string-wire wire-${stringIndex}`} />
+                  <div className={`string-wire wire-${instrument === 'bass' ? 'bass-' : ''}${stringIndex}`} />
                   
                   {/* Active selection (blue pulsing circle) */}
                   {isActive && (
