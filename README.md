@@ -12,6 +12,8 @@ Aplicação web interativa para desenhar e visualizar escalas no braço da guita
 - **Casa inicial configurável** — defina a partir de qual casa a visualização começa
 - **Quantidade de casas** ajustável (4 a 24)
 - **Nome da escala** — campo de texto para identificar a escala (ex: A# Diminuta, C Maior)
+- **Escalas conhecidas com autocomplete** — aplique rapidamente escalas como Maior, Menor Natural e Menor Harmônica
+- **Visualização por formatos** — escolha entre `TUDO` (padrão) ou isolar um formato específico (1º ao 5º, estilo CAGED)
 - **Download como imagem** — exporte a escala como PNG em alta resolução para compartilhar
 - **Remover marcações** — clique numa nota já marcada para removê-la
 - **Limpar tudo** — botão para resetar todas as marcações
@@ -46,8 +48,9 @@ npm run deploy
 2. Digite o **nome da escala** no campo de texto
 3. **Clique** em uma posição no braço da guitarra — aparece um círculo azul pulsante
 4. Escolha entre **dedo (1–6)** ou **cifra (A–G, com # ou b)** pelo teclado ou pelos botões
-5. Repita para todas as posições da escala
-6. Clique em **Download** para salvar a imagem da escala
+5. Para escalas conhecidas, use o seletor de **visualização de formatos** (`TUDO`, `1º`, `2º` ... `5º`)
+6. Repita para todas as posições da escala
+7. Clique em **Download** para salvar a imagem da escala
 
 ## Licença
 

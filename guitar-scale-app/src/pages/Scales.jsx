@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import html2canvas from 'html2canvas'
 import GuitarFretboard from '../components/GuitarFretboard'
@@ -7,13 +7,15 @@ import './Scales.css'
 
 const VALID_NOTES = ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B']
 const NOTE_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
-const MAX_FRET = 24
-const MIN_SCALE_SPAN_FRETS = 12
-const INSTRUMENT_OPEN_NOTES = {
+export const MAX_FRET = 24
+export const MIN_SCALE_SPAN_FRETS = 12
+export const FORMAT_SPAN_FRETS = 4
+export const CAGED_FORMAT_SPAN_FRETS = 5
+export const INSTRUMENT_OPEN_NOTES = {
   guitar: ['E', 'B', 'G', 'D', 'A', 'E'],
   bass: ['G', 'D', 'A', 'E'],
 }
-const NOTE_TO_SEMITONE = {
+export const NOTE_TO_SEMITONE = {
   C: 0,
   'C#': 1,
   Db: 1,
@@ -32,9 +34,9 @@ const NOTE_TO_SEMITONE = {
   Bb: 10,
   B: 11,
 }
-const SEMITONE_TO_NOTE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-const AUTO_SCALE_NOTE_COLOR = '#607d8b'
-const AUTO_SCALE_TONIC_COLOR = '#ffca28'
+export const SEMITONE_TO_NOTE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+export const AUTO_SCALE_NOTE_COLOR = '#607d8b'
+export const AUTO_SCALE_TONIC_COLOR = '#ffca28'
 const ROOT_OPTIONS = ['C', 'C#', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
 const SCALE_PATTERNS = [
   { id: 'major', name: 'Maior', intervals: [0, 2, 4, 5, 7, 9, 11] },
@@ -62,7 +64,7 @@ function getKnownScaleByLabel(input) {
   return KNOWN_SCALES.find(scale => normalizeScaleLabel(scale.label) === normalizedInput) || null
 }
 
-function getScaleSemitones(scale) {
+export function getScaleSemitones(scale) {
   const rootSemitone = NOTE_TO_SEMITONE[scale.root]
   if (rootSemitone === undefined) return new Set()
 
@@ -71,7 +73,7 @@ function getScaleSemitones(scale) {
   )
 }
 
-function scaleHasOpenString(scale, instrumentName) {
+export function scaleHasOpenString(scale, instrumentName) {
   const openNotes = INSTRUMENT_OPEN_NOTES[instrumentName] || INSTRUMENT_OPEN_NOTES.guitar
   const scaleSemitones = getScaleSemitones(scale)
 
@@ -81,7 +83,44 @@ function scaleHasOpenString(scale, instrumentName) {
   })
 }
 
-function buildScaleMarkers(scale, instrumentName, startFret, fretCount) {
+export function getOpenStringIndexesForScale(scale, instrumentName, startFret = 1) {
+  const openNotes = INSTRUMENT_OPEN_NOTES[instrumentName] || INSTRUMENT_OPEN_NOTES.guitar
+  const scaleSemitones = getScaleSemitones(scale)
+  const firstFormatLastFret = Math.min(MAX_FRET, startFret + FORMAT_SPAN_FRETS - 1)
+
+  return new Set(
+    openNotes
+      .map((note, index) => {
+        const noteSemitone = NOTE_TO_SEMITONE[note]
+        if (noteSemitone === undefined || !scaleSemitones.has(noteSemitone)) {
+          return null
+        }
+
+        const lowerStringNote = openNotes[index + 1]
+        const lowerStringSemitone = NOTE_TO_SEMITONE[lowerStringNote]
+
+        // Avoid redundant open note if the adjacent lower string already has
+        // the same pitch class in the first visible 4-fret window.
+        if (lowerStringSemitone !== undefined) {
+          const duplicateFret = (noteSemitone - lowerStringSemitone + 12) % 12
+          if (duplicateFret > 0) {
+            const duplicateAbsoluteFret = duplicateFret
+            if (duplicateAbsoluteFret >= startFret && duplicateAbsoluteFret <= firstFormatLastFret) {
+              return null
+            }
+          }
+        }
+
+        if (noteSemitone !== undefined && scaleSemitones.has(noteSemitone)) {
+          return index
+        }
+        return null
+      })
+      .filter(index => index !== null)
+  )
+}
+
+export function buildScaleMarkers(scale, instrumentName, startFret, fretCount) {
   const openNotes = INSTRUMENT_OPEN_NOTES[instrumentName] || INSTRUMENT_OPEN_NOTES.guitar
   const rootSemitone = NOTE_TO_SEMITONE[scale.root]
 
@@ -117,6 +156,110 @@ function buildScaleMarkers(scale, instrumentName, startFret, fretCount) {
   }, {})
 }
 
+export function buildScaleFormats(markers, instrumentName, startFret, fretCount, scale = null) {
+  const openNotes = INSTRUMENT_OPEN_NOTES[instrumentName] || INSTRUMENT_OPEN_NOTES.guitar
+  const stringCount = openNotes.length
+  const lastFret = Math.min(MAX_FRET, startFret + fretCount - 1)
+
+  const markerEntries = Object.keys(markers).map((key) => {
+    const [stringIndexRaw, fretIndexRaw] = key.split('-')
+    const stringIndex = parseInt(stringIndexRaw, 10)
+    const fretIndex = parseInt(fretIndexRaw, 10)
+
+    return {
+      key,
+      stringIndex,
+      absoluteFret: startFret + fretIndex,
+    }
+  })
+
+  if (instrumentName === 'guitar' && scale) {
+    const rootSemitone = NOTE_TO_SEMITONE[scale.root]
+
+    if (rootSemitone !== undefined) {
+      const tonicAnchorFrets = Array.from(new Set(
+        markerEntries
+          .filter((entry) => {
+            const marker = markers[entry.key]
+            if (!marker || marker.type !== 'note') return false
+            const semitone = NOTE_TO_SEMITONE[marker.value]
+            return semitone === rootSemitone
+          })
+          .map(entry => entry.absoluteFret)
+          .filter(fret => fret >= startFret && fret <= lastFret)
+      )).sort((a, b) => a - b)
+
+      if (tonicAnchorFrets.length > 0) {
+        const cagedAnchors = tonicAnchorFrets.slice(0, 5)
+        const usedWindows = new Set()
+        const cagedFormats = cagedAnchors
+          .map((anchorFret) => {
+            // In CAGED mode, each format starts from a tonic anchor.
+            const windowStart = anchorFret
+            const windowEnd = Math.min(lastFret, windowStart + CAGED_FORMAT_SPAN_FRETS - 1)
+            const windowKey = `${windowStart}-${windowEnd}`
+            if (usedWindows.has(windowKey)) return null
+
+            const entriesInWindow = markerEntries.filter((entry) => (
+              entry.absoluteFret >= windowStart && entry.absoluteFret <= windowEnd
+            ))
+
+            if (entriesInWindow.length === 0) return null
+
+            usedWindows.add(windowKey)
+            return {
+              startFret: windowStart,
+              endFret: windowEnd,
+              markerKeys: entriesInWindow.map(entry => entry.key),
+            }
+          })
+          .filter(Boolean)
+
+        if (cagedFormats.length > 0) {
+          return cagedFormats.map((format, index) => ({
+            id: `format-${index + 1}`,
+            label: `${index + 1}º formato (casas ${format.startFret}–${format.endFret})`,
+            ...format,
+          }))
+        }
+      }
+    }
+  }
+
+  const strictFormats = []
+  const relaxedFormats = []
+
+  for (let windowStart = startFret; windowStart <= lastFret; windowStart += FORMAT_SPAN_FRETS) {
+    const windowEnd = Math.min(lastFret, windowStart + FORMAT_SPAN_FRETS - 1)
+    const entriesInWindow = markerEntries.filter((entry) => (
+      entry.absoluteFret >= windowStart && entry.absoluteFret <= windowEnd
+    ))
+
+    if (entriesInWindow.length === 0) continue
+
+    const stringsCovered = new Set(entriesInWindow.map(entry => entry.stringIndex)).size
+    const formatData = {
+      startFret: windowStart,
+      endFret: windowEnd,
+      markerKeys: entriesInWindow.map(entry => entry.key),
+    }
+
+    if (stringsCovered === stringCount) {
+      strictFormats.push(formatData)
+    } else if (entriesInWindow.length >= stringCount + 2) {
+      relaxedFormats.push(formatData)
+    }
+  }
+
+  const baseFormats = strictFormats.length > 0 ? strictFormats : relaxedFormats
+
+  return baseFormats.map((format, index) => ({
+    id: `format-${index + 1}`,
+    label: `${index + 1}º formato (casas ${format.startFret}–${format.endFret})`,
+    ...format,
+  }))
+}
+
 function Scales() {
   const navigate = useNavigate()
   // markers: { [key]: { type: 'finger'|'note'|'fret', value: ... } }
@@ -134,11 +277,69 @@ function Scales() {
   const [openStrings, setOpenStrings] = useState(new Set())
   const [selectedScaleInput, setSelectedScaleInput] = useState('')
   const [selectedScaleFeedback, setSelectedScaleFeedback] = useState('')
+  const [activeKnownScale, setActiveKnownScale] = useState(null)
+  const [scaleFormats, setScaleFormats] = useState([])
+  const [selectedScaleView, setSelectedScaleView] = useState('all')
   const pendingTimerRef = useRef(null)
   const fretDigitTimerRef = useRef(null)
   const captureRef = useRef(null)
 
   const hasFretNumbers = Object.values(markers).some(m => m.type === 'fret')
+
+  const visibleMarkers = useMemo(() => {
+    if (selectedScaleView === 'all') return markers
+
+    const chosenFormat = scaleFormats.find(format => format.id === selectedScaleView)
+    if (!chosenFormat) return markers
+
+    const allowedKeys = new Set(chosenFormat.markerKeys)
+    const formatEntries = Object.entries(markers)
+      .filter(([key]) => allowedKeys.has(key))
+      .map(([key, marker]) => {
+        const [stringIndexRaw, fretIndexRaw] = key.split('-')
+        return {
+          key,
+          marker,
+          stringIndex: parseInt(stringIndexRaw, 10),
+          fretIndex: parseInt(fretIndexRaw, 10),
+        }
+      })
+      .sort((a, b) => a.stringIndex - b.stringIndex || a.fretIndex - b.fretIndex)
+
+    const keptNotesByString = new Map()
+
+    return formatEntries.reduce((acc, entry) => {
+      const { key, marker, stringIndex } = entry
+
+      if (marker?.type === 'note') {
+        const previousStringNotes = keptNotesByString.get(stringIndex - 1)
+        if (previousStringNotes?.has(marker.value)) {
+          return acc
+        }
+
+        const currentNotes = keptNotesByString.get(stringIndex) || new Set()
+        currentNotes.add(marker.value)
+        keptNotesByString.set(stringIndex, currentNotes)
+      }
+
+      acc[key] = marker
+      return acc
+    }, {})
+  }, [markers, scaleFormats, selectedScaleView])
+
+  const visibleOpenStrings = useMemo(() => {
+    if (selectedScaleView === 'all') return openStrings
+
+    const chosenFormat = scaleFormats.find(format => format.id === selectedScaleView)
+    if (!chosenFormat) return openStrings
+
+    // Open strings only make sense in the initial visible position.
+    if (chosenFormat.startFret !== startingFret) {
+      return new Set()
+    }
+
+    return openStrings
+  }, [openStrings, scaleFormats, selectedScaleView, startingFret])
 
   const handleCellClick = useCallback((stringIndex, fretIndex) => {
     const key = `${stringIndex}-${fretIndex}`
@@ -229,6 +430,9 @@ function Scales() {
     setColorPickerCell(null)
     setOpenStrings(new Set())
     setSelectedScaleFeedback('')
+    setActiveKnownScale(null)
+    setScaleFormats([])
+    setSelectedScaleView('all')
   }, [instrument])
 
   const handleClearAll = useCallback(() => {
@@ -239,6 +443,9 @@ function Scales() {
     setColorPickerCell(null)
     setOpenStrings(new Set())
     setSelectedScaleFeedback('')
+    setActiveKnownScale(null)
+    setScaleFormats([])
+    setSelectedScaleView('all')
   }, [])
 
   const handleApplyKnownScale = useCallback((rawInput) => {
@@ -267,12 +474,18 @@ function Scales() {
       setTotalFrets(nextTotalFrets)
     }
 
-    setMarkers(buildScaleMarkers(chosenScale, instrument, nextStartingFret, nextTotalFrets))
+    const nextMarkers = buildScaleMarkers(chosenScale, instrument, nextStartingFret, nextTotalFrets)
+    const nextFormats = buildScaleFormats(nextMarkers, instrument, nextStartingFret, nextTotalFrets, chosenScale)
+
+    setMarkers(nextMarkers)
     setActiveCell(null)
     setPendingNote(null)
     setPendingFretDigits('')
     setColorPickerCell(null)
-    setOpenStrings(new Set())
+    setOpenStrings(getOpenStringIndexesForScale(chosenScale, instrument, nextStartingFret))
+    setActiveKnownScale(chosenScale)
+    setScaleFormats(nextFormats)
+    setSelectedScaleView('all')
 
     setSelectedScaleInput(chosenScale.label)
     setScaleName(chosenScale.label)
@@ -292,6 +505,20 @@ function Scales() {
         : `Escala ${chosenScale.label} aplicada no braço.`
     )
   }, [instrument, startingFret, totalFrets])
+
+  useEffect(() => {
+    if (!activeKnownScale) return
+
+    const nextMarkers = buildScaleMarkers(activeKnownScale, instrument, startingFret, totalFrets)
+    const nextFormats = buildScaleFormats(nextMarkers, instrument, startingFret, totalFrets, activeKnownScale)
+
+    setMarkers(nextMarkers)
+    setScaleFormats(nextFormats)
+    setOpenStrings(getOpenStringIndexesForScale(activeKnownScale, instrument, startingFret))
+    if (selectedScaleView !== 'all' && !nextFormats.some(format => format.id === selectedScaleView)) {
+      setSelectedScaleView('all')
+    }
+  }, [activeKnownScale, instrument, startingFret, totalFrets, selectedScaleView])
 
   const handleDownload = useCallback(async () => {
     if (!captureRef.current) return
@@ -525,6 +752,21 @@ function Scales() {
               Aplicar no braço
             </button>
           </div>
+          <div className="known-scales-view-row">
+            <label htmlFor="known-scales-view" className="known-scales-view-label">Visualização dos formatos:</label>
+            <select
+              id="known-scales-view"
+              className="known-scales-view-select"
+              value={selectedScaleView}
+              onChange={(e) => setSelectedScaleView(e.target.value)}
+              disabled={scaleFormats.length === 0}
+            >
+              <option value="all">TUDO (padrão)</option>
+              {scaleFormats.map(format => (
+                <option key={format.id} value={format.id}>{format.label}</option>
+              ))}
+            </select>
+          </div>
           {selectedScaleFeedback && (
             <p className={`known-scales-feedback ${selectedScaleFeedback.includes('não encontrada') ? 'error' : ''}`}>
               {selectedScaleFeedback}
@@ -550,7 +792,7 @@ function Scales() {
 
         <div className="fretboard-container">
           <GuitarFretboard
-            markers={markers}
+            markers={visibleMarkers}
             activeCell={activeCell}
             startingFret={startingFret}
             totalFrets={totalFrets}
@@ -558,7 +800,7 @@ function Scales() {
             onCellContextMenu={handleCellContextMenu}
             hideFretNumbers={hasFretNumbers}
             colorMode={colorMode}
-            openStrings={openStrings}
+            openStrings={visibleOpenStrings}
             onOpenStringToggle={handleOpenStringToggle}
             allowOpenStrings={!hasFretNumbers}
             instrument={instrument}

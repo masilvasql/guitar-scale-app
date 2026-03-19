@@ -152,6 +152,43 @@
   font-weight: 500;
 }
 
+.known-scales-view-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.known-scales-view-label {
+  color: #9fb3d1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.known-scales-view-select {
+  min-width: 250px;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: #fff;
+  background: #0f1724;
+  border: 2px solid #32445f;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.known-scales-view-select:focus {
+  border-color: #2196F3;
+  box-shadow: 0 0 10px rgba(33, 150, 243, 0.25);
+}
+
+.known-scales-view-select:disabled {
+  color: #6c7f9c;
+  border-color: #2b374a;
+  cursor: not-allowed;
+}
+
 .known-scales-feedback.error {
   color: #ff8e8e;
 }
@@ -644,5 +681,14 @@
   .known-scales-row {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .known-scales-view-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .known-scales-view-select {
+    min-width: 100%;
   }
 }
