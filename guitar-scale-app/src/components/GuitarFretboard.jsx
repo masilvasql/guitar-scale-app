@@ -47,6 +47,7 @@ const DEFAULT_COLORIR_COLOR = '#2196F3'
 
 function getMarkerColor(marker, colorMode) {
   if (!marker) return '#666'
+  if (marker.color) return marker.color
   if (colorMode === 'colorir') return marker.color || DEFAULT_COLORIR_COLOR
   if (marker.type === 'finger') return FINGER_COLORS[marker.value] || '#666'
   if (marker.type === 'note') return NOTE_COLORS[marker.value] || '#666'
@@ -56,19 +57,43 @@ function getMarkerColor(marker, colorMode) {
 
 function getMarkerLabel(marker) {
   if (!marker) return ''
-  return String(marker.value)
+  return String(marker.displayValue ?? marker.value)
 }
 
 // Frets that traditionally have inlay dots
 const INLAY_FRETS = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24]
 const DOUBLE_INLAY_FRETS = [12, 24]
 
-function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCellClick, onCellContextMenu, hideFretNumbers, colorMode, openStrings, onOpenStringToggle, allowOpenStrings, instrument = 'guitar' }) {
+function getBarreSegments(barres, startingFret, hideFretNumbers) {
+  const fretHeaderHeight = hideFretNumbers ? 0 : 22
+  const inlayOffset = 15
+  const stringHeight = 40
+
+  return (barres || [])
+    .filter(barre => typeof barre.fret === 'number' && barre.fret >= startingFret)
+    .map((barre, index) => {
+      const rangeStart = Math.min(barre.fromString, barre.toString)
+      const rangeEnd = Math.max(barre.fromString, barre.toString)
+      const fretIndex = barre.fret - startingFret
+
+      return {
+        id: `${barre.fret}-${barre.fromString}-${barre.toString}-${index}`,
+        left: `calc(${fretIndex} * var(--fret-cell-width) + (var(--fret-cell-width) / 2))`,
+        top: fretHeaderHeight + inlayOffset + rangeStart * stringHeight + 8,
+        height: (rangeEnd - rangeStart) * stringHeight + 24,
+        type: barre.type || 'partial',
+      }
+    })
+}
+
+function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCellClick, onCellContextMenu, hideFretNumbers, colorMode, openStrings, onOpenStringToggle, allowOpenStrings, instrument = 'guitar', variant = 'classic', barres = [] }) {
   const config = INSTRUMENTS[instrument] || INSTRUMENTS.guitar
   const frets = Array.from({ length: totalFrets }, (_, i) => i)
   const strings = Array.from({ length: config.stringCount }, (_, i) => i)
   const longPressTimerRef = useRef(null)
   const longPressTriggeredRef = useRef(false)
+  const variantClassName = `fretboard-wrapper--${variant}`
+  const barreSegments = getBarreSegments(barres, startingFret, hideFretNumbers)
 
   const handleTouchStart = useCallback((key, e) => {
     longPressTriggeredRef.current = false
@@ -92,7 +117,7 @@ function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCell
   }, [])
 
   return (
-    <div className="fretboard-wrapper">
+    <div className={`fretboard-wrapper ${variantClassName}`}>
       {/* String labels on the left */}
       <div className="string-labels" style={{ paddingTop: hideFretNumbers ? '15px' : '52px' }}>
         {strings.map(s => {
@@ -142,6 +167,19 @@ function GuitarFretboard({ markers, activeCell, startingFret, totalFrets, onCell
             )
           })}
         </div>
+
+        {barreSegments.map(barre => (
+          <div
+            key={barre.id}
+            className={`barre-overlay barre-overlay--${barre.type}`}
+            style={{
+              left: barre.left,
+              top: `${barre.top}px`,
+              height: `${barre.height}px`,
+            }}
+            aria-hidden="true"
+          />
+        ))}
 
         {/* Guitar strings and frets */}
         {strings.map(stringIndex => (

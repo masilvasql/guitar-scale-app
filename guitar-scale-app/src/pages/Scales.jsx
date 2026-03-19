@@ -7,6 +7,115 @@ import './Scales.css'
 
 const VALID_NOTES = ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B']
 const NOTE_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+const MAX_FRET = 24
+const MIN_SCALE_SPAN_FRETS = 12
+const INSTRUMENT_OPEN_NOTES = {
+  guitar: ['E', 'B', 'G', 'D', 'A', 'E'],
+  bass: ['G', 'D', 'A', 'E'],
+}
+const NOTE_TO_SEMITONE = {
+  C: 0,
+  'C#': 1,
+  Db: 1,
+  D: 2,
+  'D#': 3,
+  Eb: 3,
+  E: 4,
+  F: 5,
+  'F#': 6,
+  Gb: 6,
+  G: 7,
+  'G#': 8,
+  Ab: 8,
+  A: 9,
+  'A#': 10,
+  Bb: 10,
+  B: 11,
+}
+const SEMITONE_TO_NOTE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+const AUTO_SCALE_NOTE_COLOR = '#607d8b'
+const AUTO_SCALE_TONIC_COLOR = '#ffca28'
+const ROOT_OPTIONS = ['C', 'C#', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+const SCALE_PATTERNS = [
+  { id: 'major', name: 'Maior', intervals: [0, 2, 4, 5, 7, 9, 11] },
+  { id: 'naturalMinor', name: 'Menor Natural', intervals: [0, 2, 3, 5, 7, 8, 10] },
+  { id: 'harmonicMinor', name: 'Menor Harmônica', intervals: [0, 2, 3, 5, 7, 8, 11] },
+  { id: 'melodicMinor', name: 'Menor Melódica', intervals: [0, 2, 3, 5, 7, 9, 11] },
+  { id: 'majorPentatonic', name: 'Pentatônica Maior', intervals: [0, 2, 4, 7, 9] },
+  { id: 'minorPentatonic', name: 'Pentatônica Menor', intervals: [0, 3, 5, 7, 10] },
+]
+const KNOWN_SCALES = ROOT_OPTIONS.flatMap(root =>
+  SCALE_PATTERNS.map(pattern => ({
+    key: `${root}-${pattern.id}`,
+    label: `${root} ${pattern.name}`,
+    root,
+    pattern,
+  }))
+)
+
+function normalizeScaleLabel(value) {
+  return value.trim().replace(/\s+/g, ' ').toLowerCase()
+}
+
+function getKnownScaleByLabel(input) {
+  const normalizedInput = normalizeScaleLabel(input)
+  return KNOWN_SCALES.find(scale => normalizeScaleLabel(scale.label) === normalizedInput) || null
+}
+
+function getScaleSemitones(scale) {
+  const rootSemitone = NOTE_TO_SEMITONE[scale.root]
+  if (rootSemitone === undefined) return new Set()
+
+  return new Set(
+    scale.pattern.intervals.map(interval => (rootSemitone + interval) % 12)
+  )
+}
+
+function scaleHasOpenString(scale, instrumentName) {
+  const openNotes = INSTRUMENT_OPEN_NOTES[instrumentName] || INSTRUMENT_OPEN_NOTES.guitar
+  const scaleSemitones = getScaleSemitones(scale)
+
+  return openNotes.some(note => {
+    const noteSemitone = NOTE_TO_SEMITONE[note]
+    return noteSemitone !== undefined && scaleSemitones.has(noteSemitone)
+  })
+}
+
+function buildScaleMarkers(scale, instrumentName, startFret, fretCount) {
+  const openNotes = INSTRUMENT_OPEN_NOTES[instrumentName] || INSTRUMENT_OPEN_NOTES.guitar
+  const rootSemitone = NOTE_TO_SEMITONE[scale.root]
+
+  if (rootSemitone === undefined) {
+    return {}
+  }
+
+  const scaleSemitones = new Set(
+    scale.pattern.intervals.map(interval => (rootSemitone + interval) % 12)
+  )
+
+  return openNotes.reduce((acc, openNote, stringIndex) => {
+    const openSemitone = NOTE_TO_SEMITONE[openNote]
+    if (openSemitone === undefined) return acc
+
+    for (let fretOffset = 0; fretOffset < fretCount; fretOffset += 1) {
+      const absoluteFret = startFret + fretOffset
+      if (absoluteFret > MAX_FRET) continue
+
+      const semitone = (openSemitone + absoluteFret) % 12
+      if (scaleSemitones.has(semitone)) {
+        const markerKey = `${stringIndex}-${fretOffset}`
+        const isTonic = semitone === rootSemitone
+        acc[markerKey] = {
+          type: 'note',
+          value: SEMITONE_TO_NOTE[semitone],
+          color: isTonic ? AUTO_SCALE_TONIC_COLOR : AUTO_SCALE_NOTE_COLOR,
+        }
+      }
+    }
+
+    return acc
+  }, {})
+}
 
 function Scales() {
   const navigate = useNavigate()
@@ -23,6 +132,8 @@ function Scales() {
   const [colorMode, setColorMode] = useState('padrao')
   const [instrument, setInstrument] = useState('guitar')
   const [openStrings, setOpenStrings] = useState(new Set())
+  const [selectedScaleInput, setSelectedScaleInput] = useState('')
+  const [selectedScaleFeedback, setSelectedScaleFeedback] = useState('')
   const pendingTimerRef = useRef(null)
   const fretDigitTimerRef = useRef(null)
   const captureRef = useRef(null)
@@ -117,6 +228,7 @@ function Scales() {
     setPendingFretDigits('')
     setColorPickerCell(null)
     setOpenStrings(new Set())
+    setSelectedScaleFeedback('')
   }, [instrument])
 
   const handleClearAll = useCallback(() => {
@@ -126,7 +238,60 @@ function Scales() {
     setPendingFretDigits('')
     setColorPickerCell(null)
     setOpenStrings(new Set())
+    setSelectedScaleFeedback('')
   }, [])
+
+  const handleApplyKnownScale = useCallback((rawInput) => {
+    const chosenScale = getKnownScaleByLabel(rawInput)
+
+    if (!chosenScale) {
+      setSelectedScaleFeedback('Escala não encontrada. Escolha uma opção da lista.')
+      return
+    }
+
+    const hasOpenString = scaleHasOpenString(chosenScale, instrument)
+    const preferredStartingFret = hasOpenString ? 1 : startingFret
+    const maxStartingFretForSpan = Math.max(1, MAX_FRET - MIN_SCALE_SPAN_FRETS + 1)
+    const nextStartingFret = Math.min(preferredStartingFret, maxStartingFretForSpan)
+    const currentLastFret = nextStartingFret + totalFrets - 1
+    const requiredLastFret = Math.min(MAX_FRET, nextStartingFret + MIN_SCALE_SPAN_FRETS - 1)
+    const nextTotalFrets = currentLastFret >= requiredLastFret
+      ? totalFrets
+      : requiredLastFret - nextStartingFret + 1
+
+    if (nextStartingFret !== startingFret) {
+      setStartingFret(nextStartingFret)
+    }
+
+    if (nextTotalFrets !== totalFrets) {
+      setTotalFrets(nextTotalFrets)
+    }
+
+    setMarkers(buildScaleMarkers(chosenScale, instrument, nextStartingFret, nextTotalFrets))
+    setActiveCell(null)
+    setPendingNote(null)
+    setPendingFretDigits('')
+    setColorPickerCell(null)
+    setOpenStrings(new Set())
+
+    setSelectedScaleInput(chosenScale.label)
+    setScaleName(chosenScale.label)
+
+    if (nextTotalFrets !== totalFrets) {
+      setSelectedScaleFeedback(
+        hasOpenString
+          ? `Escala ${chosenScale.label} aplicada. Como há corda solta, o braço iniciou na 1ª casa para o desenho aberto aparecer por último (na 12ª) e expandiu para ${nextTotalFrets} casas visíveis.`
+          : `Escala ${chosenScale.label} aplicada. Braço expandido para ${nextTotalFrets} casas visíveis.`
+      )
+      return
+    }
+
+    setSelectedScaleFeedback(
+      hasOpenString
+        ? `Escala ${chosenScale.label} aplicada. Como há corda solta, o braço iniciou na 1ª casa para o desenho aberto aparecer por último (na 12ª).`
+        : `Escala ${chosenScale.label} aplicada no braço.`
+    )
+  }, [instrument, startingFret, totalFrets])
 
   const handleDownload = useCallback(async () => {
     if (!captureRef.current) return
@@ -329,6 +494,44 @@ function Scales() {
       </div>
 
       <div className="scale-name-container">
+        <div className="known-scales-picker">
+          <label htmlFor="known-scales-input" className="known-scales-label">Escalas conhecidas (autocomplete):</label>
+          <div className="known-scales-row">
+            <input
+              id="known-scales-input"
+              type="text"
+              className="known-scales-input"
+              placeholder="Ex: C Maior, A Menor Natural, E Pentatônica Menor"
+              list="known-scales-options"
+              value={selectedScaleInput}
+              onChange={(e) => setSelectedScaleInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleApplyKnownScale(selectedScaleInput)
+                }
+              }}
+            />
+            <datalist id="known-scales-options">
+              {KNOWN_SCALES.map(scale => (
+                <option key={scale.key} value={scale.label} />
+              ))}
+            </datalist>
+            <button
+              type="button"
+              className="known-scales-apply-btn"
+              onClick={() => handleApplyKnownScale(selectedScaleInput)}
+            >
+              Aplicar no braço
+            </button>
+          </div>
+          {selectedScaleFeedback && (
+            <p className={`known-scales-feedback ${selectedScaleFeedback.includes('não encontrada') ? 'error' : ''}`}>
+              {selectedScaleFeedback}
+            </p>
+          )}
+        </div>
+
         <input
           type="text"
           className="scale-name-input"

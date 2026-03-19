@@ -1,4 +1,5 @@
 .fretboard-wrapper {
+  --fret-cell-width: 70px;
   display: flex;
   align-items: flex-start;
   gap: 0;
@@ -73,6 +74,54 @@
   border: 2px solid #2c1e17;
 }
 
+.fretboard-wrapper--modern .fretboard {
+  background:
+    linear-gradient(180deg, rgba(16, 24, 40, 0.98) 0%, rgba(12, 18, 30, 0.98) 100%),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.08), rgba(59, 130, 246, 0.02));
+  border-radius: 12px;
+  border: 1px solid rgba(71, 85, 105, 0.9);
+  box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.08), 0 18px 30px rgba(2, 6, 23, 0.38);
+}
+
+.barre-overlay {
+  position: absolute;
+  width: 18px;
+  margin-left: -9px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.92), rgba(55, 65, 81, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+  z-index: 6;
+  pointer-events: none;
+}
+
+.barre-overlay--full {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(71, 85, 105, 0.95));
+}
+
+.barre-overlay--partial {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.92), rgba(100, 116, 139, 0.92));
+}
+
+.fretboard-wrapper--modern .barre-overlay {
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.9), rgba(37, 99, 235, 0.95));
+  border-color: rgba(191, 219, 254, 0.75);
+  box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.18), 0 10px 24px rgba(37, 99, 235, 0.35);
+}
+
+.fretboard-wrapper--modern .barre-overlay--partial {
+  background: linear-gradient(180deg, rgba(96, 165, 250, 0.86), rgba(30, 64, 175, 0.92));
+}
+
+.fretboard-wrapper--modern .fret-number {
+  color: #94a3b8;
+}
+
+.fretboard-wrapper--modern .inlay-dot {
+  background: radial-gradient(circle at 30% 30%, #67e8f9, #334155);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.18);
+}
+
 /* Fret numbers */
 .fret-numbers {
   display: flex;
@@ -80,7 +129,7 @@
 }
 
 .fret-number {
-  width: 70px;
+  width: var(--fret-cell-width);
   text-align: center;
   font-size: 12px;
   font-weight: bold;
@@ -96,7 +145,7 @@
 }
 
 .inlay-cell {
-  width: 70px;
+  width: var(--fret-cell-width);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -127,7 +176,7 @@
 
 /* Fret cells */
 .fret-cell {
-  width: 70px;
+  width: var(--fret-cell-width);
   height: 40px;
   position: relative;
   cursor: pointer;
@@ -137,12 +186,25 @@
   transition: background-color 0.15s ease;
 }
 
+.fretboard-wrapper--modern .fret-cell {
+  border-right: 2px solid rgba(148, 163, 184, 0.28);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+}
+
 .fret-cell:first-child {
   border-left: 5px solid #222;
 }
 
+.fretboard-wrapper--modern .fret-cell:first-child {
+  border-left: 3px solid rgba(226, 232, 240, 0.8);
+}
+
 .fret-cell:hover {
   background-color: rgba(255, 255, 255, 0.08);
+}
+
+.fretboard-wrapper--modern .fret-cell:hover {
+  background-color: rgba(96, 165, 250, 0.1);
 }
 
 .fret-cell.active {
@@ -160,6 +222,32 @@
   background: linear-gradient(180deg, #e0e0e0, #999);
   box-shadow: 0 1px 1px rgba(0,0,0,0.3);
   pointer-events: none;
+}
+
+.fretboard-wrapper--modern .string-wire {
+  background: linear-gradient(180deg, #e2e8f0, #64748b);
+  box-shadow: 0 0 8px rgba(148, 163, 184, 0.14);
+}
+
+.fretboard-wrapper--modern .wire-3,
+.fretboard-wrapper--modern .wire-4,
+.fretboard-wrapper--modern .wire-5,
+.fretboard-wrapper--modern .wire-bass-1,
+.fretboard-wrapper--modern .wire-bass-2,
+.fretboard-wrapper--modern .wire-bass-3 {
+  background: linear-gradient(180deg, #cbd5e1, #475569);
+}
+
+.fretboard-wrapper--modern .open-string-note {
+  color: #94a3b8;
+  border-color: rgba(71, 85, 105, 0.9);
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.fretboard-wrapper--modern .open-string-note.active {
+  background: linear-gradient(180deg, #38bdf8, #2563eb);
+  border-color: rgba(125, 211, 252, 0.9);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
 }
 
 .wire-0 { height: 1.5px; }
@@ -253,6 +341,13 @@
 .fret-cell:hover .note-marker,
 .fret-cell:hover .fret-num-marker {
   transform: translate(-50%, -50%) scale(1.15);
+}
+
+.fretboard-wrapper--modern .marker,
+.fretboard-wrapper--modern .note-marker,
+.fretboard-wrapper--modern .finger-marker,
+.fretboard-wrapper--modern .fret-num-marker {
+  z-index: 12;
 }
 
 @keyframes pulse {

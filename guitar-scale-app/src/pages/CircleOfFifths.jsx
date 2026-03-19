@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback, useMemo } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import html2canvas from 'html2canvas'
+import GuitarFretboard from '../components/GuitarFretboard'
 import './CircleOfFifths.css'
 
 // ─── Circle of Fifths data ────────────────────────────────────────────────────
@@ -29,6 +30,238 @@ const DEGREE_COLORS = [
 
 const INNER_MINOR_COLORS = '#a78bfa'
 const OUTER_MAJOR_COLORS = '#38bdf8'
+const STRING_OPEN_PITCHES = [4, 11, 7, 2, 9, 4]
+const STRING_OPEN_MIDI = [64, 59, 55, 50, 45, 40]
+const SHARP_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+const FLAT_NOTES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+const NOTE_TO_PITCH_CLASS = {
+  C: 0,
+  'C#': 1,
+  Db: 1,
+  D: 2,
+  'D#': 3,
+  Eb: 3,
+  E: 4,
+  F: 5,
+  'F#': 6,
+  Gb: 6,
+  G: 7,
+  'G#': 8,
+  Ab: 8,
+  A: 9,
+  'A#': 10,
+  Bb: 10,
+  B: 11,
+}
+
+const HARMONIC_QUALITIES = ['major', 'minor', 'minor', 'major', 'major', 'minor', 'diminished']
+const CHORD_SUFFIX = {
+  major: '',
+  minor: 'm',
+  diminished: '°',
+}
+
+const CHORD_INTERVALS = {
+  major: [0, 4, 7],
+  minor: [0, 3, 7],
+  diminished: [0, 3, 6],
+}
+
+const CHORD_DEGREE_LABELS = {
+  major: {
+    0: 'R',
+    4: '3',
+    7: '5',
+  },
+  minor: {
+    0: 'R',
+    3: 'b3',
+    7: '5',
+  },
+  diminished: {
+    0: 'R',
+    3: 'b3',
+    6: 'b5',
+  },
+}
+
+const CAGED_FINGER_COLORS = {
+  1: '#2196F3',
+  2: '#4CAF50',
+  3: '#FF9800',
+  4: '#F44336',
+}
+
+const CAGED_VOICINGS = {
+  major: [
+    { shape: 'C', label: 'Forma C', anchorString: 4, anchorOffset: 3, frets: [0, 1, 0, 2, 3, null], fingers: [null, 1, null, 2, 3, null] },
+    { shape: 'A', label: 'Forma A', anchorString: 4, anchorOffset: 0, frets: [0, 2, 2, 2, 0, null], fingers: [1, 3, 3, 3, 1, null], barre: { fretOffset: 0, fromString: 4, toString: 0, type: 'partial', finger: 1 } },
+    { shape: 'G', label: 'Forma G', anchorString: 5, anchorOffset: 3, frets: [3, 0, 0, 0, 2, 3], fingers: [4, 1, 1, 1, 2, 3], barre: { fretOffset: 0, fromString: 3, toString: 1, type: 'partial', finger: 1 } },
+    { shape: 'E', label: 'Forma E', anchorString: 5, anchorOffset: 0, frets: [0, 0, 1, 2, 2, 0], fingers: [1, 1, 2, 3, 4, 1], barre: { fretOffset: 0, fromString: 5, toString: 0, type: 'full', finger: 1 } },
+    { shape: 'D', label: 'Forma D', anchorString: 1, anchorOffset: 3, frets: [2, 3, 2, 0, null, null], fingers: [3, 4, 2, 1, null, null] },
+  ],
+  minor: [
+    { shape: 'C', label: 'Forma C menor', anchorString: 4, anchorOffset: 3, frets: [3, 4, 5, 5, 3, null], fingers: [1, 2, 3, 4, 1, null], barre: { fretOffset: 3, fromString: 4, toString: 0, type: 'partial', finger: 1 } },
+    { shape: 'A', label: 'Forma A menor', anchorString: 4, anchorOffset: 0, frets: [0, 1, 2, 2, 0, null], fingers: [1, 2, 3, 4, 1, null], barre: { fretOffset: 0, fromString: 4, toString: 0, type: 'partial', finger: 1 } },
+    { shape: 'G', label: 'Forma G menor', anchorString: 5, anchorOffset: 3, frets: [3, 3, 3, 5, 5, 3], fingers: [1, 1, 1, 3, 4, 1], barre: { fretOffset: 3, fromString: 5, toString: 0, type: 'full', finger: 1 } },
+    { shape: 'E', label: 'Forma E menor', anchorString: 5, anchorOffset: 0, frets: [0, 0, 0, 2, 2, 0], fingers: [1, 1, 1, 2, 3, 1], barre: { fretOffset: 0, fromString: 5, toString: 0, type: 'full', finger: 1 } },
+    { shape: 'D', label: 'Forma D menor', anchorString: 1, anchorOffset: 3, frets: [1, 3, 2, 0, null, null], fingers: [1, 3, 2, null, null, null] },
+  ],
+  diminished: [
+    { shape: 'D', label: 'Diminuta fechada', anchorString: 1, anchorOffset: 3, frets: [2, 3, 1, 2, null, null], fingers: [3, 4, 1, 2, null, null] },
+    { shape: 'A', label: 'Diminuta móvel', anchorString: 4, anchorOffset: 2, frets: [2, 1, 2, 1, 2, null], fingers: [4, 1, 3, 1, 2, null], barre: { fretOffset: 1, fromString: 4, toString: 1, type: 'partial', finger: 1 } },
+    { shape: 'E', label: 'Diminuta simétrica', anchorString: 5, anchorOffset: 2, frets: [2, 1, 2, 1, null, 2], fingers: [4, 1, 3, 1, null, 2], barre: { fretOffset: 1, fromString: 3, toString: 1, type: 'partial', finger: 1 } },
+  ],
+}
+
+function normalizePitchClass(value) {
+  return ((value % 12) + 12) % 12
+}
+
+function noteToPitchClass(note) {
+  if (!note) return null
+  return NOTE_TO_PITCH_CLASS[note] ?? null
+}
+
+function preferFlatsForNote(note) {
+  return note.includes('b') || ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb'].includes(note)
+}
+
+function formatNote(pitchClass, preferFlats) {
+  const notes = preferFlats ? FLAT_NOTES : SHARP_NOTES
+  return notes[normalizePitchClass(pitchClass)]
+}
+
+function getChordToneNotes(rootNote, quality) {
+  const rootPitchClass = noteToPitchClass(rootNote)
+  if (rootPitchClass === null) return []
+  const preferFlats = preferFlatsForNote(rootNote)
+  const intervals = CHORD_INTERVALS[quality] || CHORD_INTERVALS.major
+
+  return intervals.map(interval => formatNote(rootPitchClass + interval, preferFlats))
+}
+
+function getChordDegreeLabel(rootNote, note, quality) {
+  const rootPitchClass = noteToPitchClass(rootNote)
+  const notePitchClass = noteToPitchClass(note)
+  if (rootPitchClass === null || notePitchClass === null) {
+    return '?'
+  }
+  const interval = normalizePitchClass(notePitchClass - rootPitchClass)
+
+  return CHORD_DEGREE_LABELS[quality]?.[interval] || '?'
+}
+
+function findVoicingBaseFret(rootNote, voicing) {
+  const rootPitchClass = noteToPitchClass(rootNote)
+  if (rootPitchClass === null) return 0
+  const anchorPitchClass = STRING_OPEN_PITCHES[voicing.anchorString]
+  const relativeFret = normalizePitchClass(rootPitchClass - anchorPitchClass)
+  const fretValues = voicing.frets.filter(fret => fret !== null)
+  const minOffset = Math.min(...fretValues)
+  const maxOffset = Math.max(...fretValues)
+
+  for (let octave = 0; octave < 3; octave += 1) {
+    const anchorFret = relativeFret + octave * 12
+    const baseFret = anchorFret - voicing.anchorOffset
+    const minFret = baseFret + minOffset
+    const maxFret = baseFret + maxOffset
+
+    if (baseFret >= 0 && minFret >= 0 && maxFret <= 18) {
+      return baseFret
+    }
+  }
+
+  return Math.max(0, relativeFret - voicing.anchorOffset)
+}
+
+function buildCagedVoicing(rootNote, quality, voicing, displayMode = 'notes') {
+  const baseFret = findVoicingBaseFret(rootNote, voicing)
+  const preferFlats = preferFlatsForNote(rootNote)
+  const chordTones = new Set(getChordToneNotes(rootNote, quality))
+  const absoluteFrets = voicing.frets.map(fret => (fret === null ? null : baseFret + fret))
+  const playedFrets = absoluteFrets.filter(fret => fret !== null && fret > 0)
+  const minPlayedFret = playedFrets.length > 0 ? Math.min(...playedFrets) : 0
+  const maxPlayedFret = playedFrets.length > 0 ? Math.max(...playedFrets) : 0
+  const startingFret = Math.max(1, minPlayedFret <= 1 ? 1 : minPlayedFret - 1)
+  const totalFrets = Math.max(5, maxPlayedFret - startingFret + 2)
+  const markers = {}
+
+  absoluteFrets.forEach((fret, stringIndex) => {
+    if (fret === null) {
+      return
+    }
+
+    const note = formatNote(STRING_OPEN_PITCHES[stringIndex] + fret, preferFlats)
+    const degreeLabel = getChordDegreeLabel(rootNote, note, quality)
+
+    const marker = {
+      type: 'note',
+      value: chordTones.has(note) ? note : formatNote(STRING_OPEN_PITCHES[stringIndex] + fret, preferFlats),
+      displayValue: displayMode === 'degrees'
+        ? degreeLabel || '?'
+        : note,
+      finger: voicing.fingers?.[stringIndex] || null,
+      color: voicing.fingers?.[stringIndex] ? CAGED_FINGER_COLORS[voicing.fingers[stringIndex]] : undefined,
+    }
+
+    if (fret === 0) {
+      return
+    }
+
+    markers[`${stringIndex}-${fret - startingFret}`] = marker
+  })
+
+  const barres = voicing.barre
+    ? (() => {
+        const fret = baseFret + voicing.barre.fretOffset
+        if (fret <= 0) {
+          return []
+        }
+
+        return [{
+          fret,
+          fromString: voicing.barre.fromString,
+          toString: voicing.barre.toString,
+          type: voicing.barre.type,
+        }]
+      })()
+    : []
+
+  return {
+    ...voicing,
+    markers,
+    barres,
+    startingFret,
+    totalFrets,
+    absoluteFrets,
+    midiNotes: getVoicingMidiNotes(absoluteFrets),
+  }
+}
+
+function getChordDisplayName(rootNote, quality) {
+  return `${rootNote}${CHORD_SUFFIX[quality] || ''}`
+}
+
+function getVoicingFormula(absoluteFrets) {
+  return absoluteFrets
+    .slice()
+    .reverse()
+    .map(fret => (fret === null ? 'x' : fret))
+    .join(' • ')
+}
+
+function midiToFrequency(midi) {
+  return 440 * 2 ** ((midi - 69) / 12)
+}
+
+function getVoicingMidiNotes(absoluteFrets) {
+  return absoluteFrets
+    .map((fret, stringIndex) => ({ fret, stringIndex }))
+    .filter(({ fret }) => fret !== null)
+    .sort((left, right) => right.stringIndex - left.stringIndex)
+    .map(({ fret, stringIndex }) => STRING_OPEN_MIDI[stringIndex] + fret)
+}
 
 // ─── SVG Circle component ─────────────────────────────────────────────────────
 const SIZE = 420
@@ -259,15 +492,13 @@ function computeHarmonicSet(selectedIndex) {
 }
 
 // ─── Harmonic field table ─────────────────────────────────────────────────────
-function HarmonicFieldTable({ selectedIndex }) {
+function HarmonicFieldTable({ selectedIndex, activeChordId, onChordSelect }) {
   if (selectedIndex === null) return (
     <p className="cof-hint">Clique em uma nota no círculo para ver o campo harmônico</p>
   )
 
   const { majorIndices } = computeHarmonicSet(selectedIndex)
   const rootKey = MAJOR_KEYS[selectedIndex]
-
-  const chordQualities = ['', 'm', 'm', '', '', 'm', '°']
 
   return (
     <div className="cof-harmonic-table-wrapper">
@@ -276,21 +507,199 @@ function HarmonicFieldTable({ selectedIndex }) {
       </h3>
       <div className="cof-harmonic-chords">
         {majorIndices.map((idx, degreeIdx) => (
-          <div
+          <button
             key={degreeIdx}
+            type="button"
             className="cof-chord-card"
             style={{ borderColor: DEGREE_COLORS[degreeIdx] + '88', background: DEGREE_COLORS[degreeIdx] + '15' }}
+            data-active={activeChordId === `${idx}-${HARMONIC_QUALITIES[degreeIdx]}`}
+            onClick={() => onChordSelect({
+              degree: MAJOR_DEGREES[degreeIdx],
+              degreeIndex: degreeIdx,
+              quality: HARMONIC_QUALITIES[degreeIdx],
+              root: MAJOR_KEYS[idx],
+              id: `${idx}-${HARMONIC_QUALITIES[degreeIdx]}`,
+            })}
           >
             <span className="cof-chord-degree" style={{ color: DEGREE_COLORS[degreeIdx] }}>
               {MAJOR_DEGREES[degreeIdx]}
             </span>
             <span className="cof-chord-name">
-              {MAJOR_KEYS[idx]}{chordQualities[degreeIdx]}
+              {getChordDisplayName(MAJOR_KEYS[idx], HARMONIC_QUALITIES[degreeIdx])}
             </span>
-          </div>
+          </button>
         ))}
       </div>
     </div>
+  )
+}
+
+function CagedChordViewer({ chord }) {
+  const audioContextRef = useRef(null)
+  const [playingVoicingId, setPlayingVoicingId] = useState(null)
+  const [displayMode, setDisplayMode] = useState('notes')
+
+  useEffect(() => {
+    return () => {
+      if (audioContextRef.current) {
+        audioContextRef.current.close()
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    setDisplayMode('notes')
+  }, [chord?.id])
+
+  const handlePlayVoicing = useCallback(async (voicingId, midiNotes) => {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext
+    if (!AudioContextClass || midiNotes.length === 0) {
+      return
+    }
+
+    if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
+      audioContextRef.current = new AudioContextClass()
+    }
+
+    const context = audioContextRef.current
+    if (context.state === 'suspended') {
+      await context.resume()
+    }
+
+    const now = context.currentTime + 0.03
+    setPlayingVoicingId(voicingId)
+
+    midiNotes.forEach((midi, index) => {
+      const oscillator = context.createOscillator()
+      const gainNode = context.createGain()
+      const filter = context.createBiquadFilter()
+      const startAt = now + index * 0.045
+      const endAt = startAt + 1.1
+
+      oscillator.type = 'triangle'
+      oscillator.frequency.setValueAtTime(midiToFrequency(midi), startAt)
+
+      filter.type = 'lowpass'
+      filter.frequency.setValueAtTime(2400, startAt)
+      filter.Q.setValueAtTime(0.7, startAt)
+
+      gainNode.gain.setValueAtTime(0.0001, startAt)
+      gainNode.gain.exponentialRampToValueAtTime(0.12, startAt + 0.02)
+      gainNode.gain.exponentialRampToValueAtTime(0.08, startAt + 0.18)
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, endAt)
+
+      oscillator.connect(filter)
+      filter.connect(gainNode)
+      gainNode.connect(context.destination)
+
+      oscillator.start(startAt)
+      oscillator.stop(endAt)
+    })
+
+    window.setTimeout(() => {
+      setPlayingVoicingId(current => (current === voicingId ? null : current))
+    }, 1200 + midiNotes.length * 45)
+  }, [])
+
+  if (!chord) {
+    return (
+      <p className="cof-hint cof-caged-hint">
+        Clique em um acorde do campo harmônico para ver as formas CAGED no braço.
+      </p>
+    )
+  }
+
+  const chordTones = getChordToneNotes(chord.root, chord.quality)
+  const voicingDefs = CAGED_VOICINGS[chord.quality] || []
+  const voicings = voicingDefs.map(voicing => buildCagedVoicing(chord.root, chord.quality, voicing, displayMode))
+
+  return (
+    <section className="cof-caged-section">
+      <div className="cof-caged-header">
+        <div>
+          <h3 className="cof-caged-title">
+            Formas CAGED de <span>{getChordDisplayName(chord.root, chord.quality)}</span>
+          </h3>
+          <p className="cof-caged-subtitle">
+            Grau {chord.degree} do campo harmônico. Tons do acorde: {chordTones.join(' • ')}
+          </p>
+          <div className="cof-display-mode-switch" aria-label="Modo de visualizacao do acorde">
+            <button
+              type="button"
+              className="cof-display-mode-btn"
+              data-active={displayMode === 'notes'}
+              onClick={() => setDisplayMode('notes')}
+            >
+              Notas
+            </button>
+            <button
+              type="button"
+              className="cof-display-mode-btn"
+              data-active={displayMode === 'degrees'}
+              onClick={() => setDisplayMode('degrees')}
+            >
+              Graus
+            </button>
+          </div>
+          <div className="cof-fingering-legend" aria-label="Legenda de dedilhado">
+            {Object.entries(CAGED_FINGER_COLORS).map(([finger, color]) => (
+              <span key={finger} className="cof-fingering-pill">
+                <span className="cof-fingering-dot" style={{ backgroundColor: color }} />
+                Dedo {finger}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="cof-caged-grid">
+        {voicings.length === 0 && (
+          <p className="cof-hint">Nao foi possivel gerar formas CAGED para este acorde.</p>
+        )}
+        {voicings.map(voicing => (
+          <article key={`${chord.id}-${voicing.shape}`} className="cof-caged-card">
+            <div className="cof-caged-card-header">
+              <div>
+                <strong>{voicing.label}</strong>
+                <span>{getChordDisplayName(chord.root, chord.quality)}</span>
+              </div>
+              <div className="cof-caged-meta">
+                {voicing.barres.length > 0 && (
+                  <span className="cof-barre-badge">Pestana</span>
+                )}
+                <button
+                  type="button"
+                  className="cof-play-button"
+                  data-playing={playingVoicingId === `${chord.id}-${voicing.shape}`}
+                  onClick={() => handlePlayVoicing(`${chord.id}-${voicing.shape}`, voicing.midiNotes)}
+                >
+                  {playingVoicingId === `${chord.id}-${voicing.shape}` ? 'Tocando...' : 'Ouvir acorde'}
+                </button>
+                <small>{getVoicingFormula(voicing.absoluteFrets)}</small>
+              </div>
+            </div>
+
+            <div className="cof-caged-fretboard">
+              <GuitarFretboard
+                markers={voicing.markers}
+                activeCell={null}
+                startingFret={voicing.startingFret}
+                totalFrets={voicing.totalFrets}
+                onCellClick={() => {}}
+                onCellContextMenu={() => {}}
+                hideFretNumbers={false}
+                colorMode="note"
+                openStrings={new Set()}
+                allowOpenStrings={false}
+                instrument="guitar"
+                variant="modern"
+                barres={voicing.barres}
+              />
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -331,20 +740,23 @@ function CircleOfFifths() {
   const [tableName, setTableName] = useState('')
   const [rotation, setRotation] = useState(0)
   const [selectedIndex, setSelectedIndex] = useState(null)
+  const [selectedChord, setSelectedChord] = useState(null)
   const captureRef = useRef(null)
 
   const sliceAngle = 360 / 12
 
-  // Which circle index is at the top pointer?
-  const pointerIndex = useMemo(() => {
-    const normalized = ((-rotation % 360) + 360) % 360
-    return Math.round(normalized / sliceAngle) % 12
-  }, [rotation, sliceAngle])
-
   const harmonicSet = useMemo(() => computeHarmonicSet(selectedIndex), [selectedIndex])
+
+  useEffect(() => {
+    setSelectedChord(null)
+  }, [selectedIndex])
 
   const handleSelect = useCallback((i) => {
     setSelectedIndex(prev => prev === i ? null : i)
+  }, [])
+
+  const handleChordSelect = useCallback((chord) => {
+    setSelectedChord(prev => (prev?.id === chord.id ? null : chord))
   }, [])
 
   const handleStep = useCallback((dir) => {
@@ -409,7 +821,12 @@ function CircleOfFifths() {
           harmonicSet={harmonicSet}
         />
         <RotationControls onStep={handleStep} />
-        <HarmonicFieldTable selectedIndex={selectedIndex} />
+        <HarmonicFieldTable
+          selectedIndex={selectedIndex}
+          activeChordId={selectedChord?.id}
+          onChordSelect={handleChordSelect}
+        />
+        <CagedChordViewer chord={selectedChord} />
       </section>
 
       {/* ── Table Section ── */}
