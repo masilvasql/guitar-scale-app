@@ -21,7 +21,14 @@ function getNearestNote(frequency) {
   }
 }
 
-function detectPitchAutoCorrelation(buffer, sampleRate) {
+function detectPitchAutoCorrelation(buffer, sampleRate, options = {}) {
+  const {
+    minRms = 0.01,
+    trimThreshold = 0.2,
+    minFrequency = 60,
+    maxFrequency = 1400,
+  } = options
+
   const size = buffer.length
   let rms = 0
 
@@ -31,23 +38,22 @@ function detectPitchAutoCorrelation(buffer, sampleRate) {
   }
 
   rms = Math.sqrt(rms / size)
-  if (rms < 0.01) {
+  if (rms < minRms) {
     return null
   }
 
-  const threshold = 0.2
   let r1 = 0
   let r2 = size - 1
 
   for (let i = 0; i < size / 2; i += 1) {
-    if (Math.abs(buffer[i]) < threshold) {
+    if (Math.abs(buffer[i]) < trimThreshold) {
       r1 = i
       break
     }
   }
 
   for (let i = 1; i < size / 2; i += 1) {
-    if (Math.abs(buffer[size - i]) < threshold) {
+    if (Math.abs(buffer[size - i]) < trimThreshold) {
       r2 = size - i
       break
     }
@@ -100,7 +106,7 @@ function detectPitchAutoCorrelation(buffer, sampleRate) {
 
   const frequency = sampleRate / period
 
-  if (!Number.isFinite(frequency) || frequency < 60 || frequency > 1400) {
+  if (!Number.isFinite(frequency) || frequency < minFrequency || frequency > maxFrequency) {
     return null
   }
 
@@ -109,6 +115,13 @@ function detectPitchAutoCorrelation(buffer, sampleRate) {
 
 function Afinador() {
   const navigate = useNavigate()
+  const isMobile = useMemo(() => {
+    if (typeof navigator === 'undefined') {
+      return false
+    }
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  }, [])
+
   const [isListening, setIsListening] = useState(false)
   const [frequency, setFrequency] = useState(null)
   const [error, setError] = useState('')
@@ -178,18 +191,25 @@ function Afinador() {
 
     analyser.getFloatTimeDomainData(data)
 
-    const detectedFrequency = detectPitchAutoCorrelation(data, audioCtxRef.current.sampleRate)
+    const detectedFrequency = detectPitchAutoCorrelation(data, audioCtxRef.current.sampleRate, {
+      minRms: isMobile ? 0.006 : 0.01,
+      trimThreshold: isMobile ? 0.12 : 0.2,
+      minFrequency: 60,
+      maxFrequency: 1400,
+    })
+
     if (detectedFrequency) {
       setFrequency((prev) => {
         if (!prev) {
           return detectedFrequency
         }
-        return (prev * 0.7) + (detectedFrequency * 0.3)
+        const blend = isMobile ? 0.45 : 0.3
+        return (prev * (1 - blend)) + (detectedFrequency * blend)
       })
     }
 
     rafRef.current = window.requestAnimationFrame(analyzePitch)
-  }, [])
+  }, [isMobile])
 
   const startListening = useCallback(async () => {
     try {
