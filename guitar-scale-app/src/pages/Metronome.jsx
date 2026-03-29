@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import './Metronome.css'
 
 const TIME_SIGNATURES = [
@@ -23,6 +23,7 @@ const MAX_BPM = 300
 
 function Metronome() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [bpm, setBpm] = useState(120)
   const [timeSignature, setTimeSignature] = useState(TIME_SIGNATURES[2]) // 4/4
   const [isPlaying, setIsPlaying] = useState(false)
@@ -55,6 +56,15 @@ function Metronome() {
   useEffect(() => {
     subdivisionRef.current = subdivision.divisor
   }, [subdivision])
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const bpmFromUrl = Number(params.get('bpm'))
+
+    if (Number.isFinite(bpmFromUrl) && bpmFromUrl >= MIN_BPM && bpmFromUrl <= MAX_BPM) {
+      setBpm(bpmFromUrl)
+    }
+  }, [location.search])
 
   useEffect(() => {
     return () => {

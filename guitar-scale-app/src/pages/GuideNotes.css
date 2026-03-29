@@ -1,0 +1,291 @@
+.gn-page {
+  min-height: 100vh;
+  padding: 20px;
+  background: #121212;
+}
+
+.gn-header {
+  text-align: center;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.gn-header h1 {
+  font-size: 2rem;
+  margin: 0;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.gn-subtitle {
+  color: #888;
+  font-size: 14px;
+  margin: 6px 0 0;
+}
+
+.gn-header .back-button {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #1a1a2e;
+  border: 2px solid #333;
+  border-radius: 10px;
+  color: #ccc;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.gn-header .back-button:hover {
+  border-color: #2196F3;
+  color: #fff;
+  background: rgba(33, 150, 243, 0.1);
+}
+
+.gn-controls {
+  margin: 24px auto 0;
+  max-width: 920px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gn-control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gn-control span {
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.gn-control select {
+  height: 42px;
+  border-radius: 10px;
+  border: 2px solid #333;
+  background: #1a1a2e;
+  color: #fff;
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  outline: none;
+}
+
+.gn-control select:focus {
+  border-color: #2196F3;
+}
+
+.gn-extra-options {
+  margin: 10px auto 0;
+  max-width: 920px;
+}
+
+.gn-guide-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.gn-guide-toggle input {
+  width: 16px;
+  height: 16px;
+}
+
+.gn-grid {
+  max-width: 920px;
+  margin: 16px auto 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.gn-card {
+  border-radius: 12px;
+  border: 2px solid #2f3648;
+  background: #151827;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gn-degree {
+  margin: 0;
+  color: #60a5fa;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.gn-chord {
+  margin: 0;
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.gn-notes {
+  display: flex;
+  gap: 8px;
+}
+
+.gn-note-box {
+  flex: 1;
+  border-radius: 10px;
+  padding: 8px;
+  text-align: center;
+}
+
+.gn-note-box .label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.gn-note-box strong {
+  font-size: 1.35rem;
+  color: #fff;
+}
+
+.gn-note-box.third {
+  background: rgba(34, 197, 94, 0.16);
+  border: 1px solid rgba(34, 197, 94, 0.38);
+}
+
+.gn-note-box.third .label {
+  color: #86efac;
+}
+
+.gn-note-box.seventh {
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.gn-note-box.seventh .label {
+  color: #fcd34d;
+}
+
+.gn-tip {
+  max-width: 920px;
+  margin: 14px auto 0;
+  border: 1px solid #334155;
+  background: #0f172a;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.gn-tip p {
+  margin: 0;
+  color: #bfdbfe;
+  font-size: 14px;
+  text-align: center;
+}
+
+.gn-reference {
+  max-width: 920px;
+  margin: 18px auto 0;
+}
+
+.gn-reference h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.25rem;
+}
+
+.gn-reference > p {
+  margin: 6px 0 0;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.gn-table-block {
+  margin-top: 14px;
+}
+
+.gn-table-block h3 {
+  margin: 0 0 8px;
+  color: #cbd5e1;
+  font-size: 1rem;
+}
+
+.gn-table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #334155;
+}
+
+.gn-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+  background: #111827;
+}
+
+.gn-table th,
+.gn-table td {
+  border: 1px solid #253043;
+  text-align: center;
+  padding: 9px 8px;
+}
+
+.gn-table th {
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: #0f172a;
+}
+
+.gn-table td {
+  color: #d1d5db;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.gn-table .key-cell {
+  color: #86efac;
+  font-size: 12px;
+  font-weight: 700;
+  background: #0b1220;
+}
+
+.gn-table .cell-main {
+  white-space: nowrap;
+}
+
+@media (max-width: 680px) {
+  .gn-header .back-button {
+    position: static;
+    transform: none;
+    margin: 0 auto 14px;
+  }
+
+  .gn-header h1 {
+    font-size: 1.55rem;
+  }
+
+  .gn-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .gn-reference h2 {
+    font-size: 1.05rem;
+  }
+}

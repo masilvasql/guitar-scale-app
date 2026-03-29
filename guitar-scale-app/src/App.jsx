@@ -5,6 +5,8 @@ import CircleOfFifths from './pages/CircleOfFifths'
 import HarmonicField from './pages/HarmonicField'
 import Metronome from './pages/Metronome'
 import Afinador from './pages/Afinador'
+import Progressions from './pages/Progressions'
+import GuideNotes from './pages/GuideNotes'
 
 function App() {
   return (
@@ -15,6 +17,8 @@ function App() {
       <Route path="/campo-harmonico" element={<HarmonicField />} />
       <Route path="/metronomo" element={<Metronome />} />
       <Route path="/afinador" element={<Afinador />} />
+      <Route path="/progressoes" element={<Progressions />} />
+      <Route path="/notas-guia" element={<GuideNotes />} />
     </Routes>
   )
 }

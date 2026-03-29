@@ -1,13 +1,43 @@
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Home.css'
 
+const FAVORITES_STORAGE_KEY = 'guitar-app-favorites'
+const RECENT_STORAGE_KEY = 'guitar-app-recent'
+const RECENT_LIMIT = 5
+
 function Home() {
   const navigate = useNavigate()
+  const [search, setSearch] = useState('')
+  const [collapsedSections, setCollapsedSections] = useState({})
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      const raw = window.localStorage.getItem(FAVORITES_STORAGE_KEY)
+      if (!raw) return []
+      const parsed = JSON.parse(raw)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  })
+  const [recent, setRecent] = useState(() => {
+    try {
+      const raw = window.localStorage.getItem(RECENT_STORAGE_KEY)
+      if (!raw) return []
+      const parsed = JSON.parse(raw)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  })
 
-  const cards = [
+  const features = [
     {
       title: 'Escalas',
       description: 'Visualize e marque escalas no braço da guitarra',
+      category: 'Tecnica e Pratica',
+      badge: 'Essencial',
+      quick: true,
       icon: (
         <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="4" y="10" width="40" height="28" rx="4" stroke="currentColor" strokeWidth="2" fill="none"/>
@@ -28,6 +58,9 @@ function Home() {
     {
       title: 'Ciclo das Quintas',
       description: 'Preencha e estude o ciclo das quintas',
+      category: 'Harmonia',
+      badge: 'Teoria',
+      quick: false,
       icon: (
         <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2" fill="none"/>
@@ -46,6 +79,9 @@ function Home() {
     {
       title: 'Campo Harmônico',
       description: 'Preencha os acordes de cada grau do campo harmônico',
+      category: 'Harmonia',
+      badge: 'Essencial',
+      quick: false,
       icon: (
         <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="4" y="6" width="40" height="36" rx="3" stroke="currentColor" strokeWidth="2" fill="none"/>
@@ -74,6 +110,9 @@ function Home() {
     {
       title: 'Metrônomo',
       description: 'Controle o ritmo e o andamento da sua prática',
+      category: 'Ritmo',
+      badge: 'Essencial',
+      quick: true,
       icon: (
         <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 44L30 44L34 14L14 14Z" stroke="currentColor" strokeWidth="2" fill="none"/>
@@ -91,6 +130,9 @@ function Home() {
     {
       title: 'Afinador',
       description: 'Afine sua guitarra em tempo real pelo microfone',
+      category: 'Tecnica e Pratica',
+      badge: 'Novo',
+      quick: true,
       icon: (
         <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="24" cy="24" r="18" stroke="currentColor" strokeWidth="2" fill="none"/>
@@ -106,28 +148,219 @@ function Home() {
       ),
       path: '/afinador',
     },
+    {
+      title: 'Progressões',
+      description: 'Gere progressões harmônicas por tonalidade e modo',
+      category: 'Harmonia',
+      badge: 'Essencial',
+      quick: false,
+      icon: (
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="5" y="9" width="38" height="30" rx="4" stroke="currentColor" strokeWidth="2" fill="none"/>
+          <rect x="9" y="14" width="8" height="20" rx="2" fill="#2196F3"/>
+          <rect x="20" y="18" width="8" height="16" rx="2" fill="#4CAF50"/>
+          <rect x="31" y="12" width="8" height="22" rx="2" fill="#FF9800"/>
+          <path d="M9 36L39 36" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      ),
+      path: '/progressoes',
+    },
+    {
+      title: 'Notas Guia',
+      description: 'Veja 3ª e 7ª dos acordes para improvisar melhor',
+      category: 'Harmonia',
+      badge: 'Avancado',
+      quick: false,
+      icon: (
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="5" y="7" width="38" height="34" rx="4" stroke="currentColor" strokeWidth="2" fill="none"/>
+          <line x1="10" y1="16" x2="38" y2="16" stroke="currentColor" strokeWidth="1.5"/>
+          <line x1="10" y1="24" x2="38" y2="24" stroke="currentColor" strokeWidth="1.5"/>
+          <line x1="10" y1="32" x2="38" y2="32" stroke="currentColor" strokeWidth="1.5"/>
+          <circle cx="18" cy="24" r="3" fill="#4CAF50"/>
+          <circle cx="30" cy="24" r="3" fill="#FF9800"/>
+          <text x="16" y="14" fill="#93c5fd" fontSize="6" fontWeight="bold">3</text>
+          <text x="28" y="14" fill="#93c5fd" fontSize="6" fontWeight="bold">7</text>
+        </svg>
+      ),
+      path: '/notas-guia',
+    },
   ]
+
+  const categoriesOrder = ['Acesso Rapido', 'Ritmo', 'Harmonia', 'Tecnica e Pratica']
+
+  const normalizedSearch = search.trim().toLowerCase()
+
+  const featureByPath = useMemo(() => {
+    return Object.fromEntries(features.map((feature) => [feature.path, feature]))
+  }, [features])
+
+  const filteredFeatures = useMemo(() => {
+    if (!normalizedSearch) {
+      return features
+    }
+
+    return features.filter((feature) => {
+      const searchable = `${feature.title} ${feature.description} ${feature.category}`.toLowerCase()
+      return searchable.includes(normalizedSearch)
+    })
+  }, [features, normalizedSearch])
+
+  const filteredPathSet = useMemo(() => {
+    return new Set(filteredFeatures.map((feature) => feature.path))
+  }, [filteredFeatures])
+
+  const favoriteFeatures = useMemo(() => {
+    return favorites
+      .map((path) => featureByPath[path])
+      .filter((feature) => feature && filteredPathSet.has(feature.path))
+  }, [favorites, featureByPath, filteredPathSet])
+
+  const recentFeatures = useMemo(() => {
+    return recent
+      .map((path) => featureByPath[path])
+      .filter((feature) => feature && filteredPathSet.has(feature.path))
+  }, [recent, featureByPath, filteredPathSet])
+
+  const groupedFeatures = useMemo(() => {
+    const map = {
+      'Acesso Rapido': filteredFeatures.filter((feature) => feature.quick),
+      Ritmo: filteredFeatures.filter((feature) => feature.category === 'Ritmo'),
+      Harmonia: filteredFeatures.filter((feature) => feature.category === 'Harmonia'),
+      'Tecnica e Pratica': filteredFeatures.filter((feature) => feature.category === 'Tecnica e Pratica'),
+    }
+
+    const sections = categoriesOrder
+      .map((name) => ({
+        id: name.toLowerCase().replace(/\s+/g, '-'),
+        name,
+        items: map[name] || [],
+      }))
+      .filter((section) => section.items.length > 0)
+
+    if (favoriteFeatures.length > 0) {
+      sections.unshift({
+        id: 'favoritos',
+        name: 'Favoritos',
+        items: favoriteFeatures,
+      })
+    }
+
+    if (recentFeatures.length > 0) {
+      sections.unshift({
+        id: 'recentes',
+        name: 'Recentes',
+        items: recentFeatures,
+      })
+    }
+
+    return sections
+  }, [categoriesOrder, favoriteFeatures, filteredFeatures, recentFeatures])
+
+  const toggleSection = (sectionId) => {
+    setCollapsedSections((prev) => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }))
+  }
+
+  const toggleFavorite = (path) => {
+    setFavorites((prev) => {
+      const next = prev.includes(path)
+        ? prev.filter((item) => item !== path)
+        : [path, ...prev]
+
+      window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(next))
+      return next
+    })
+  }
+
+  const openFeature = (path) => {
+    navigate(path)
+
+    setRecent((prev) => {
+      const deduped = [path, ...prev.filter((item) => item !== path)]
+      const next = deduped.slice(0, RECENT_LIMIT)
+      window.localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(next))
+      return next
+    })
+  }
 
   return (
     <div className="home">
       <header className="home-header">
         <h1>🎸 Learn Guitar App</h1>
-        <p className="home-subtitle">Escolha uma ferramenta para começar</p>
+        <p className="home-subtitle">Hub de estudos com ferramentas de ritmo, harmonia e pratica</p>
+
+        <div className="home-search-wrap">
+          <input
+            type="search"
+            className="home-search"
+            value={search}
+            placeholder="Buscar ferramenta..."
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <span className="home-search-count">{filteredFeatures.length} ferramentas</span>
+        </div>
       </header>
 
-      <div className="cards-container">
-        {cards.map((card) => (
-          <button
-            key={card.path}
-            className="feature-card"
-            onClick={() => navigate(card.path)}
-          >
-            <div className="card-icon">{card.icon}</div>
-            <h2 className="card-title">{card.title}</h2>
-            <p className="card-description">{card.description}</p>
-          </button>
-        ))}
-      </div>
+      {groupedFeatures.length === 0 ? (
+        <div className="home-empty-state">
+          <p>Nenhuma ferramenta encontrada para esta busca.</p>
+        </div>
+      ) : (
+        <main className="hub-sections">
+          {groupedFeatures.map((section) => (
+            <section className="hub-section" key={section.name}>
+              <div className="hub-section-header" role="button" tabIndex={0} onClick={() => toggleSection(section.id)} onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  toggleSection(section.id)
+                }
+              }}>
+                <h2>{section.name}</h2>
+                <span>{section.items.length}</span>
+                <strong className={`hub-collapse-indicator ${collapsedSections[section.id] ? 'collapsed' : ''}`}>▾</strong>
+              </div>
+
+              {!collapsedSections[section.id] && (
+                <div className="cards-container">
+                  {section.items.map((card) => {
+                    const isFavorite = favorites.includes(card.path)
+                    return (
+                      <article key={`${section.id}-${card.path}`} className="feature-card">
+                        <div className="card-top-row">
+                          <div className="card-icon">{card.icon}</div>
+                          <button
+                            type="button"
+                            className={`card-favorite-btn ${isFavorite ? 'active' : ''}`}
+                            onClick={() => toggleFavorite(card.path)}
+                            aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                          >
+                            {isFavorite ? '★' : '☆'}
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="feature-card-open"
+                          onClick={() => openFeature(card.path)}
+                        >
+                          <span className={`card-badge badge-${card.badge.toLowerCase().replace(/\s+/g, '-')}`}>
+                            {card.badge}
+                          </span>
+                          <h3 className="card-title">{card.title}</h3>
+                          <p className="card-description">{card.description}</p>
+                        </button>
+                      </article>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
+          ))}
+        </main>
+      )}
 
       <footer className="home-footer">
         <span>Powered by <strong>Marcelo Abrão da Silva</strong></span>
