@@ -37,14 +37,39 @@ export const NOTE_TO_SEMITONE = {
 export const SEMITONE_TO_NOTE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 export const AUTO_SCALE_NOTE_COLOR = '#607d8b'
 export const AUTO_SCALE_TONIC_COLOR = '#ffca28'
+const GREEK_MODE_IDS = new Set(['ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian'])
 const ROOT_OPTIONS = ['C', 'C#', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
 const SCALE_PATTERNS = [
   { id: 'major', name: 'Maior', intervals: [0, 2, 4, 5, 7, 9, 11] },
+  { id: 'ionian', name: 'Jônio', intervals: [0, 2, 4, 5, 7, 9, 11] },
+  { id: 'dorian', name: 'Dórico', intervals: [0, 2, 3, 5, 7, 9, 10] },
+  { id: 'phrygian', name: 'Frígio', intervals: [0, 1, 3, 5, 7, 8, 10] },
+  { id: 'lydian', name: 'Lídio', intervals: [0, 2, 4, 6, 7, 9, 11] },
+  { id: 'mixolydian', name: 'Mixolídio', intervals: [0, 2, 4, 5, 7, 9, 10] },
+  { id: 'aeolian', name: 'Eólio', intervals: [0, 2, 3, 5, 7, 8, 10] },
+  { id: 'locrian', name: 'Lócrio', intervals: [0, 1, 3, 5, 6, 8, 10] },
   { id: 'naturalMinor', name: 'Menor Natural', intervals: [0, 2, 3, 5, 7, 8, 10] },
   { id: 'harmonicMinor', name: 'Menor Harmônica', intervals: [0, 2, 3, 5, 7, 8, 11] },
   { id: 'melodicMinor', name: 'Menor Melódica', intervals: [0, 2, 3, 5, 7, 9, 11] },
   { id: 'majorPentatonic', name: 'Pentatônica Maior', intervals: [0, 2, 4, 7, 9] },
   { id: 'minorPentatonic', name: 'Pentatônica Menor', intervals: [0, 3, 5, 7, 10] },
+]
+const SCALE_GROUPS = [
+  {
+    id: 'traditional',
+    label: 'Escalas Tradicionais',
+    patternIds: ['major', 'naturalMinor', 'harmonicMinor', 'melodicMinor'],
+  },
+  {
+    id: 'greekModes',
+    label: 'Modos Gregos',
+    patternIds: ['ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian'],
+  },
+  {
+    id: 'pentatonics',
+    label: 'Pentatônicas',
+    patternIds: ['majorPentatonic', 'minorPentatonic'],
+  },
 ]
 const KNOWN_SCALES = ROOT_OPTIONS.flatMap(root =>
   SCALE_PATTERNS.map(pattern => ({
@@ -54,9 +79,38 @@ const KNOWN_SCALES = ROOT_OPTIONS.flatMap(root =>
     pattern,
   }))
 )
+const PATTERN_BY_ID = SCALE_PATTERNS.reduce((acc, pattern) => {
+  acc[pattern.id] = pattern
+  return acc
+}, {})
+const KNOWN_SCALE_GROUPS = SCALE_GROUPS.map(group => ({
+  ...group,
+  scales: ROOT_OPTIONS.flatMap(root =>
+    group.patternIds
+      .map((patternId) => {
+        const pattern = PATTERN_BY_ID[patternId]
+        if (!pattern) return null
+
+        return {
+          key: `${group.id}-${root}-${pattern.id}`,
+          label: `${root} ${pattern.name}`,
+          root,
+          pattern,
+        }
+      })
+      .filter(Boolean)
+  ),
+}))
 
 function normalizeScaleLabel(value) {
-  return value.trim().replace(/\s+/g, ' ').toLowerCase()
+  return value
+    .trim()
+    .replace(/\s+/g, ' ')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\bjonio\b/g, 'ionio')
+    .replace(/\beolio\b/g, 'aeolio')
+    .toLowerCase()
 }
 
 function getKnownScaleByLabel(input) {
@@ -174,6 +228,33 @@ export function buildScaleFormats(markers, instrumentName, startFret, fretCount,
   })
 
   if (instrumentName === 'guitar' && scale) {
+    if (GREEK_MODE_IDS.has(scale.pattern.id)) {
+      const greekFormats = []
+      for (let offset = 0; offset < 7; offset += 1) {
+        const windowStart = startFret + offset
+        if (windowStart > lastFret) break
+
+        const windowEnd = Math.min(lastFret, windowStart + CAGED_FORMAT_SPAN_FRETS - 1)
+        const entriesInWindow = markerEntries.filter((entry) => (
+          entry.absoluteFret >= windowStart && entry.absoluteFret <= windowEnd
+        ))
+
+        if (entriesInWindow.length === 0) continue
+
+        greekFormats.push({
+          id: `format-${greekFormats.length + 1}`,
+          label: `${greekFormats.length + 1}º formato (casas ${windowStart}–${windowEnd})`,
+          startFret: windowStart,
+          endFret: windowEnd,
+          markerKeys: entriesInWindow.map(entry => entry.key),
+        })
+      }
+
+      if (greekFormats.length > 0) {
+        return greekFormats
+      }
+    }
+
     const rootSemitone = NOTE_TO_SEMITONE[scale.root]
 
     if (rootSemitone !== undefined) {
@@ -190,7 +271,8 @@ export function buildScaleFormats(markers, instrumentName, startFret, fretCount,
       )).sort((a, b) => a - b)
 
       if (tonicAnchorFrets.length > 0) {
-        const cagedAnchors = tonicAnchorFrets.slice(0, 5)
+        const maxFormatCount = 5
+        const cagedAnchors = tonicAnchorFrets.slice(0, maxFormatCount)
         const usedWindows = new Set()
         const cagedFormats = cagedAnchors
           .map((anchorFret) => {
@@ -280,6 +362,7 @@ function Scales() {
   const [activeKnownScale, setActiveKnownScale] = useState(null)
   const [scaleFormats, setScaleFormats] = useState([])
   const [selectedScaleView, setSelectedScaleView] = useState('all')
+  const [selectedGroupedScaleInput, setSelectedGroupedScaleInput] = useState('')
   const pendingTimerRef = useRef(null)
   const fretDigitTimerRef = useRef(null)
   const captureRef = useRef(null)
@@ -433,6 +516,7 @@ function Scales() {
     setActiveKnownScale(null)
     setScaleFormats([])
     setSelectedScaleView('all')
+    setSelectedGroupedScaleInput('')
   }, [instrument])
 
   const handleClearAll = useCallback(() => {
@@ -446,6 +530,7 @@ function Scales() {
     setActiveKnownScale(null)
     setScaleFormats([])
     setSelectedScaleView('all')
+    setSelectedGroupedScaleInput('')
   }, [])
 
   const handleApplyKnownScale = useCallback((rawInput) => {
@@ -505,6 +590,14 @@ function Scales() {
         : `Escala ${chosenScale.label} aplicada no braço.`
     )
   }, [instrument, startingFret, totalFrets])
+
+  const handleGroupedScaleSelection = useCallback((selectedLabel) => {
+    setSelectedGroupedScaleInput(selectedLabel)
+    if (!selectedLabel) return
+
+    setSelectedScaleInput(selectedLabel)
+    handleApplyKnownScale(selectedLabel)
+  }, [handleApplyKnownScale])
 
   useEffect(() => {
     if (!activeKnownScale) return
@@ -728,7 +821,7 @@ function Scales() {
               id="known-scales-input"
               type="text"
               className="known-scales-input"
-              placeholder="Ex: C Maior, A Menor Natural, E Pentatônica Menor"
+              placeholder="Ex: C Maior, D Dórico, A Menor Natural, E Pentatônica Menor"
               list="known-scales-options"
               value={selectedScaleInput}
               onChange={(e) => setSelectedScaleInput(e.target.value)}
@@ -751,6 +844,24 @@ function Scales() {
             >
               Aplicar no braço
             </button>
+          </div>
+          <div className="known-scales-grouped-row">
+            <label htmlFor="known-scales-grouped-select" className="known-scales-grouped-label">Escolha por categoria:</label>
+            <select
+              id="known-scales-grouped-select"
+              className="known-scales-grouped-select"
+              value={selectedGroupedScaleInput}
+              onChange={(e) => handleGroupedScaleSelection(e.target.value)}
+            >
+              <option value="">Selecionar escala agrupada...</option>
+              {KNOWN_SCALE_GROUPS.map(group => (
+                <optgroup key={group.id} label={group.label}>
+                  {group.scales.map(scale => (
+                    <option key={scale.key} value={scale.label}>{scale.label}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
           </div>
           <div className="known-scales-view-row">
             <label htmlFor="known-scales-view" className="known-scales-view-label">Visualização dos formatos:</label>

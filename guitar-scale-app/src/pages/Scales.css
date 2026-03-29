@@ -152,6 +152,38 @@
   font-weight: 500;
 }
 
+.known-scales-grouped-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.known-scales-grouped-label {
+  color: #9fb3d1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.known-scales-grouped-select {
+  min-width: 320px;
+  max-width: 100%;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: #fff;
+  background: #0f1724;
+  border: 2px solid #32445f;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.known-scales-grouped-select:focus {
+  border-color: #2196F3;
+  box-shadow: 0 0 10px rgba(33, 150, 243, 0.25);
+}
+
 .known-scales-view-row {
   margin-top: 10px;
   display: flex;
