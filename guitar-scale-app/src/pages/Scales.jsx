@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import html2canvas from 'html2canvas'
 import GuitarFretboard from '../components/GuitarFretboard'
 import Controls from '../components/Controls'
+import MetronomeWidget from '../components/MetronomeWidget'
 import './Scales.css'
 
 const VALID_NOTES = ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B']
@@ -363,9 +364,20 @@ function Scales() {
   const [scaleFormats, setScaleFormats] = useState([])
   const [selectedScaleView, setSelectedScaleView] = useState('all')
   const [selectedGroupedScaleInput, setSelectedGroupedScaleInput] = useState('')
+  const [isMetronomeModalOpen, setIsMetronomeModalOpen] = useState(false)
+  const [metronomePanelPos, setMetronomePanelPos] = useState({ x: 24, y: 90 })
+  const [hasMetronomePanelPos, setHasMetronomePanelPos] = useState(false)
   const pendingTimerRef = useRef(null)
   const fretDigitTimerRef = useRef(null)
   const captureRef = useRef(null)
+  const metronomePanelRef = useRef(null)
+  const metronomeDragRef = useRef({
+    active: false,
+    startPointerX: 0,
+    startPointerY: 0,
+    startX: 0,
+    startY: 0,
+  })
 
   const hasFretNumbers = Object.values(markers).some(m => m.type === 'fret')
 
@@ -639,6 +651,41 @@ function Scales() {
     setPendingFretDigits('')
   }, [])
 
+  const clampMetronomePanelPosition = useCallback((x, y) => {
+    const panelEl = metronomePanelRef.current
+    const panelWidth = panelEl?.offsetWidth || 600
+    const panelHeight = panelEl?.offsetHeight || 620
+    const safeMargin = 8
+    const maxX = Math.max(safeMargin, window.innerWidth - panelWidth - safeMargin)
+    const maxY = Math.max(safeMargin, window.innerHeight - panelHeight - safeMargin)
+
+    return {
+      x: Math.min(Math.max(safeMargin, x), maxX),
+      y: Math.min(Math.max(safeMargin, y), maxY),
+    }
+  }, [])
+
+  const handleMetronomeDragStart = useCallback((event) => {
+    if (event.button !== 0) return
+
+    metronomeDragRef.current = {
+      active: true,
+      startPointerX: event.clientX,
+      startPointerY: event.clientY,
+      startX: metronomePanelPos.x,
+      startY: metronomePanelPos.y,
+    }
+    event.preventDefault()
+  }, [metronomePanelPos.x, metronomePanelPos.y])
+
+  const closeMetronomeModal = useCallback(() => {
+    setIsMetronomeModalOpen(false)
+  }, [])
+
+  const openMetronomeModal = useCallback(() => {
+    setIsMetronomeModalOpen(true)
+  }, [])
+
   const confirmPendingNote = useCallback((letter) => {
     if (activeCell) {
       setMarkerValue({ type: 'note', value: letter })
@@ -647,6 +694,13 @@ function Scales() {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (isMetronomeModalOpen && e.key === 'Escape') {
+        closeMetronomeModal()
+        return
+      }
+
+      if (isMetronomeModalOpen) return
+
       if (!activeCell) return
 
       if (pendingNote) {
@@ -748,7 +802,59 @@ function Scales() {
       clearTimeout(pendingTimerRef.current)
       clearTimeout(fretDigitTimerRef.current)
     }
-  }, [activeCell, pendingNote, pendingFretDigits, hasFretNumbers, handleFingerInput, handleFretNumberInput, handleNoteInput, handleCancelSelection, confirmPendingNote])
+  }, [activeCell, pendingNote, pendingFretDigits, hasFretNumbers, handleFingerInput, handleFretNumberInput, handleNoteInput, handleCancelSelection, confirmPendingNote, isMetronomeModalOpen, closeMetronomeModal])
+
+  useEffect(() => {
+    if (!isMetronomeModalOpen || hasMetronomePanelPos) return
+
+    const defaultX = Math.max(16, window.innerWidth - 660)
+    const defaultY = 96
+    const nextPos = clampMetronomePanelPosition(defaultX, defaultY)
+    setMetronomePanelPos(nextPos)
+    setHasMetronomePanelPos(true)
+  }, [isMetronomeModalOpen, hasMetronomePanelPos, clampMetronomePanelPosition])
+
+  useEffect(() => {
+    if (!isMetronomeModalOpen) return undefined
+
+    const handleMove = (event) => {
+      if (!metronomeDragRef.current.active) return
+
+      const deltaX = event.clientX - metronomeDragRef.current.startPointerX
+      const deltaY = event.clientY - metronomeDragRef.current.startPointerY
+      const nextPos = clampMetronomePanelPosition(
+        metronomeDragRef.current.startX + deltaX,
+        metronomeDragRef.current.startY + deltaY
+      )
+      setMetronomePanelPos(nextPos)
+    }
+
+    const handleUp = () => {
+      metronomeDragRef.current.active = false
+    }
+
+    window.addEventListener('mousemove', handleMove)
+    window.addEventListener('mouseup', handleUp)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove)
+      window.removeEventListener('mouseup', handleUp)
+    }
+  }, [isMetronomeModalOpen, clampMetronomePanelPosition])
+
+  useEffect(() => {
+    if (!isMetronomeModalOpen) return undefined
+
+    const handleWindowResize = () => {
+      setMetronomePanelPos((prev) => clampMetronomePanelPosition(prev.x, prev.y))
+    }
+
+    window.addEventListener('resize', handleWindowResize)
+
+    return () => {
+      window.removeEventListener('resize', handleWindowResize)
+    }
+  }, [isMetronomeModalOpen, clampMetronomePanelPosition])
 
   return (
     <div className="app">
@@ -773,6 +879,18 @@ function Scales() {
         markerCount={Object.keys(markers).length}
         fretNumbersLocked={hasFretNumbers}
       />
+
+      <div className="metronome-modal-trigger-row">
+        <button
+          type="button"
+          className="metronome-open-btn"
+          onClick={openMetronomeModal}
+          aria-haspopup="dialog"
+          aria-expanded={isMetronomeModalOpen}
+        >
+          🎵 Abrir metrônomo
+        </button>
+      </div>
 
       <div className="mode-toggle-container">
         <span className="mode-toggle-label">Instrumento:</span>
@@ -1083,6 +1201,33 @@ function Scales() {
                 />
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {isMetronomeModalOpen && (
+        <div className="metronome-floating-layer">
+          <div
+            ref={metronomePanelRef}
+            className="metronome-modal"
+            role="dialog"
+            aria-modal="false"
+            aria-label="Metrônomo para praticar escalas"
+            style={{ left: `${metronomePanelPos.x}px`, top: `${metronomePanelPos.y}px` }}
+          >
+            <div className="metronome-modal-header" onMouseDown={handleMetronomeDragStart}>
+              <h2>Metrônomo</h2>
+              <button
+                type="button"
+                className="metronome-modal-close"
+                onClick={closeMetronomeModal}
+                aria-label="Fechar metrônomo"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="metronome-modal-subtitle">Arraste pela barra superior e redimensione pelo canto inferior direito.</p>
+            <MetronomeWidget />
           </div>
         </div>
       )}

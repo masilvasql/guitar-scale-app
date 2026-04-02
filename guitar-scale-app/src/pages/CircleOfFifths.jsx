@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import html2canvas from 'html2canvas'
 import GuitarFretboard from '../components/GuitarFretboard'
+import { getGuideNotesForChord } from '../utils/guideNotes'
 import './CircleOfFifths.css'
 
 // ─── Circle of Fifths data ────────────────────────────────────────────────────
@@ -10,7 +11,7 @@ const MAJOR_KEYS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'Db', 'Ab', 'Eb', 'Bb', 
 const MINOR_KEYS = ['Am', 'Em', 'Bm', 'F#m', 'C#m', 'G#m', 'D#m', 'Bbm', 'Fm', 'Cm', 'Gm', 'Dm']
 
 // Accidentals for each position (pretty unicode labels)
-const ACC_LABELS = ['0', '1♯', '2♯', '3♯', '4♯', '5♯', '6♯/6♭', '6♭', '5♭', '4♭', '3♭', '2♭', '1♭']
+const ACC_LABELS = ['0', '1♯', '2♯', '3♯', '4♯', '5♯', '6♯/6♭', '5♭', '4♭', '3♭', '2♭', '1♭']
 
 // Harmonic field degrees for major scale (Nashville numbering)
 const MAJOR_DEGREES = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII°']
@@ -55,6 +56,7 @@ const NOTE_TO_PITCH_CLASS = {
 }
 
 const HARMONIC_QUALITIES = ['major', 'minor', 'minor', 'major', 'major', 'minor', 'diminished']
+const MAJOR_SEVENTH_QUALITIES = ['maj7', 'm7', 'm7', 'maj7', '7', 'm7', 'm7b5']
 const CHORD_SUFFIX = {
   major: '',
   minor: 'm',
@@ -127,6 +129,38 @@ function preferFlatsForNote(note) {
   return note.includes('b') || ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb'].includes(note)
 }
 
+// Convert enharmonic equivalent based on context
+function convertToPreferredEnharmonic(note, useFlats) {
+  const enharmonicMap = {
+    'C#': 'Db',
+    'Db': 'C#',
+    'D#': 'Eb',
+    'Eb': 'D#',
+    'F#': 'Gb',
+    'Gb': 'F#',
+    'G#': 'Ab',
+    'Ab': 'G#',
+    'A#': 'Bb',
+    'Bb': 'A#',
+  }
+  
+  if (!enharmonicMap[note]) return note
+  
+  // Always return the appropriate enharmonic based on preference
+  const isCurrentlyFlat = note.includes('b')
+  
+  if (useFlats && !isCurrentlyFlat) {
+    // Input has sharp, output should have flat
+    return enharmonicMap[note]
+  }
+  if (!useFlats && isCurrentlyFlat) {
+    // Input has flat, output should have sharp
+    return enharmonicMap[note]
+  }
+  
+  return note
+}
+
 function formatNote(pitchClass, preferFlats) {
   const notes = preferFlats ? FLAT_NOTES : SHARP_NOTES
   return notes[normalizePitchClass(pitchClass)]
@@ -138,7 +172,10 @@ function getChordToneNotes(rootNote, quality) {
   const preferFlats = preferFlatsForNote(rootNote)
   const intervals = CHORD_INTERVALS[quality] || CHORD_INTERVALS.major
 
-  return intervals.map(interval => formatNote(rootPitchClass + interval, preferFlats))
+  return intervals.map(interval => {
+    const note = formatNote(rootPitchClass + interval, preferFlats)
+    return convertToPreferredEnharmonic(note, preferFlats)
+  })
 }
 
 function getChordDegreeLabel(rootNote, note, quality) {
@@ -192,7 +229,8 @@ function buildCagedVoicing(rootNote, quality, voicing, displayMode = 'notes') {
       return
     }
 
-    const note = formatNote(STRING_OPEN_PITCHES[stringIndex] + fret, preferFlats)
+    let note = formatNote(STRING_OPEN_PITCHES[stringIndex] + fret, preferFlats)
+    note = convertToPreferredEnharmonic(note, preferFlats)
     const degreeLabel = getChordDegreeLabel(rootNote, note, quality)
 
     const marker = {
@@ -241,6 +279,17 @@ function buildCagedVoicing(rootNote, quality, voicing, displayMode = 'notes') {
 
 function getChordDisplayName(rootNote, quality) {
   return `${rootNote}${CHORD_SUFFIX[quality] || ''}`
+}
+
+function getGuideNotesForMajorDegree(rootNote, degreeIndex) {
+  const chordType = MAJOR_SEVENTH_QUALITIES[degreeIndex] || 'maj7'
+  const chromatic = preferFlatsForNote(rootNote) ? FLAT_NOTES : SHARP_NOTES
+  const guideNotes = getGuideNotesForChord(rootNote, chordType, chromatic)
+
+  return {
+    third: guideNotes.third || '-',
+    seventh: guideNotes.seventh || '-',
+  }
 }
 
 function getVoicingFormula(absoluteFrets) {
@@ -507,27 +556,42 @@ function HarmonicFieldTable({ selectedIndex, activeChordId, onChordSelect }) {
       </h3>
       <div className="cof-harmonic-chords">
         {majorIndices.map((idx, degreeIdx) => (
-          <button
-            key={degreeIdx}
-            type="button"
-            className="cof-chord-card"
-            style={{ borderColor: DEGREE_COLORS[degreeIdx] + '88', background: DEGREE_COLORS[degreeIdx] + '15' }}
-            data-active={activeChordId === `${idx}-${HARMONIC_QUALITIES[degreeIdx]}`}
-            onClick={() => onChordSelect({
-              degree: MAJOR_DEGREES[degreeIdx],
-              degreeIndex: degreeIdx,
-              quality: HARMONIC_QUALITIES[degreeIdx],
-              root: MAJOR_KEYS[idx],
-              id: `${idx}-${HARMONIC_QUALITIES[degreeIdx]}`,
-            })}
-          >
-            <span className="cof-chord-degree" style={{ color: DEGREE_COLORS[degreeIdx] }}>
-              {MAJOR_DEGREES[degreeIdx]}
-            </span>
-            <span className="cof-chord-name">
-              {getChordDisplayName(MAJOR_KEYS[idx], HARMONIC_QUALITIES[degreeIdx])}
-            </span>
-          </button>
+          (() => {
+            let root = MAJOR_KEYS[idx]
+            const preferFlats = preferFlatsForNote(rootKey)
+            // Convert root to preferred enharmonic format based on the selected key
+            root = convertToPreferredEnharmonic(root, preferFlats)
+            const quality = HARMONIC_QUALITIES[degreeIdx]
+            const guideNotes = getGuideNotesForMajorDegree(root, degreeIdx)
+
+            return (
+              <button
+                key={degreeIdx}
+                type="button"
+                className="cof-chord-card"
+                style={{ borderColor: DEGREE_COLORS[degreeIdx] + '88', background: DEGREE_COLORS[degreeIdx] + '15' }}
+                data-active={activeChordId === `${idx}-${quality}`}
+                onClick={() => onChordSelect({
+                  degree: MAJOR_DEGREES[degreeIdx],
+                  degreeIndex: degreeIdx,
+                  quality,
+                  root,
+                  id: `${idx}-${quality}`,
+                })}
+              >
+                <span className="cof-chord-degree" style={{ color: DEGREE_COLORS[degreeIdx] }}>
+                  {MAJOR_DEGREES[degreeIdx]}
+                </span>
+                <span className="cof-chord-name">
+                  {getChordDisplayName(root, quality)}
+                </span>
+                <div className="cof-chord-guides">
+                  <span className="cof-chord-guide-pill">3ª: {guideNotes.third}</span>
+                  <span className="cof-chord-guide-pill">7ª: {guideNotes.seventh}</span>
+                </div>
+              </button>
+            )
+          })()
         ))}
       </div>
     </div>

@@ -1,0 +1,365 @@
+.met-widget {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.met-beats-display {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin: 24px 0 10px;
+  flex-wrap: wrap;
+  max-width: 500px;
+}
+
+.beat-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #2a2a3e;
+  border: 2px solid #444;
+  transition: all 0.08s ease;
+}
+
+.beat-dot.active {
+  background: #2196F3;
+  border-color: #2196F3;
+  box-shadow: 0 0 14px rgba(33, 150, 243, 0.6);
+  transform: scale(1.25);
+}
+
+.beat-dot.accent.active {
+  background: #FF9800;
+  border-color: #FF9800;
+  box-shadow: 0 0 18px rgba(255, 152, 0, 0.6);
+}
+
+.beat-dot.sub {
+  width: 12px;
+  height: 12px;
+  border-width: 1.5px;
+  border-color: #333;
+  background: #1e1e30;
+}
+
+.beat-dot.sub.active {
+  background: #64B5F6;
+  border-color: #64B5F6;
+  box-shadow: 0 0 8px rgba(100, 181, 246, 0.5);
+  transform: scale(1.2);
+}
+
+.met-tempo-marking {
+  color: #93c5fd;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  margin: 8px 0 20px;
+  letter-spacing: 1px;
+}
+
+.met-bpm-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.met-bpm-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 2px solid #333;
+  background: #1a1a2e;
+  color: #ccc;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.met-bpm-btn:hover {
+  border-color: #2196F3;
+  color: #fff;
+  background: rgba(33, 150, 243, 0.1);
+}
+
+.met-bpm-btn:active {
+  transform: scale(0.95);
+}
+
+.met-bpm-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.met-bpm-input {
+  width: 90px;
+  text-align: center;
+  font-size: 42px;
+  font-weight: 800;
+  color: #fff;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  -moz-appearance: textfield;
+}
+
+.met-bpm-input::-webkit-inner-spin-button,
+.met-bpm-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.met-bpm-label {
+  color: #888;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.met-slider-container {
+  width: 100%;
+  max-width: 400px;
+  padding: 0 10px;
+  margin-bottom: 24px;
+}
+
+.met-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #2a2a3e;
+  outline: none;
+  cursor: pointer;
+}
+
+.met-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #2196F3;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
+  transition: transform 0.15s ease;
+}
+
+.met-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.met-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #2196F3;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
+}
+
+.met-play-section {
+  margin-bottom: 30px;
+}
+
+.met-play-btn {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid #2196F3;
+  background: rgba(33, 150, 243, 0.1);
+  color: #2196F3;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.met-play-btn:hover {
+  background: rgba(33, 150, 243, 0.2);
+  transform: scale(1.05);
+  box-shadow: 0 0 24px rgba(33, 150, 243, 0.3);
+}
+
+.met-play-btn:active {
+  transform: scale(0.97);
+}
+
+.met-play-btn.playing {
+  border-color: #FF5252;
+  background: rgba(255, 82, 82, 0.1);
+  color: #FF5252;
+  animation: pulse-ring 1s ease-out infinite;
+}
+
+.met-play-btn.playing:hover {
+  background: rgba(255, 82, 82, 0.2);
+  box-shadow: 0 0 24px rgba(255, 82, 82, 0.3);
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.4); }
+  100% { box-shadow: 0 0 0 14px rgba(255, 82, 82, 0); }
+}
+
+.met-section {
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.met-section-label {
+  display: block;
+  color: #aaa;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+}
+
+.met-ts-grid {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.met-ts-btn {
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 2px solid #333;
+  background: #1a1a2e;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.met-ts-btn:hover {
+  border-color: #555;
+  color: #ccc;
+}
+
+.met-ts-btn.active {
+  border-color: #2196F3;
+  color: #2196F3;
+  background: rgba(33, 150, 243, 0.12);
+}
+
+.met-sub-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  min-width: 80px;
+}
+
+.met-sub-symbol {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.met-sub-name {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.met-accent-toggle {
+  display: flex;
+  background: #1a1a2e;
+  border: 2px solid #333;
+  border-radius: 10px;
+  overflow: hidden;
+  justify-content: center;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.met-toggle-btn {
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #888;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.met-toggle-btn:hover {
+  color: #ccc;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.met-toggle-btn.active {
+  color: #2196F3;
+  background: rgba(33, 150, 243, 0.15);
+}
+
+.met-accent-hint {
+  color: #666;
+  font-size: 12px;
+  margin: 8px 0 0;
+}
+
+@media (max-width: 500px) {
+  .met-bpm-input {
+    font-size: 32px;
+    width: 72px;
+  }
+
+  .met-bpm-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 13px;
+  }
+
+  .met-play-btn {
+    width: 68px;
+    height: 68px;
+  }
+
+  .met-ts-btn {
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+
+  .met-sub-btn {
+    min-width: 64px;
+    padding: 6px 10px;
+  }
+
+  .met-sub-symbol {
+    font-size: 16px;
+  }
+
+  .met-beats-display {
+    gap: 6px;
+  }
+}

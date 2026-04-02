@@ -11,14 +11,67 @@ const MODES = {
     intervals: [0, 2, 4, 5, 7, 9, 11],
     qualities: ['', 'm', 'm', '', '', 'm', 'dim'],
     romans: ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'],
+    seventhQualities: ['maj7', 'm7', 'm7', 'maj7', '7', 'm7', 'm7b5'],
   },
   minor: {
     label: 'Menor',
     intervals: [0, 2, 3, 5, 7, 8, 10],
     qualities: ['m', 'dim', '', 'm', 'm', '', ''],
     romans: ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII'],
+    seventhQualities: ['m7', 'm7b5', 'maj7', 'm7', 'm7', 'maj7', '7'],
+  },
+  ionian: {
+    label: 'Jônio',
+    intervals: [0, 2, 4, 5, 7, 9, 11],
+    qualities: ['', 'm', 'm', '', '', 'm', 'dim'],
+    romans: ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'],
+    seventhQualities: ['maj7', 'm7', 'm7', 'maj7', '7', 'm7', 'm7b5'],
+  },
+  dorian: {
+    label: 'Dórico',
+    intervals: [0, 2, 3, 5, 7, 9, 10],
+    qualities: ['m', 'm', '', '', 'm', 'dim', ''],
+    romans: ['i', 'ii', 'III', 'IV', 'v', 'vi°', 'VII'],
+    seventhQualities: ['m7', 'm7', 'maj7', '7', 'm7', 'm7b5', 'maj7'],
+  },
+  phrygian: {
+    label: 'Frígio',
+    intervals: [0, 1, 3, 5, 7, 8, 10],
+    qualities: ['m', '', '', 'm', 'dim', '', 'm'],
+    romans: ['i', 'bII', 'bIII', 'iv', 'v°', 'bVI', 'bvii'],
+    seventhQualities: ['m7', 'maj7', '7', 'm7', 'm7b5', 'maj7', 'm7'],
+  },
+  lydian: {
+    label: 'Lídio',
+    intervals: [0, 2, 4, 6, 7, 9, 11],
+    qualities: ['', '', 'm', 'dim', '', 'm', 'm'],
+    romans: ['I', 'II', 'iii', '#iv°', 'V', 'vi', 'vii'],
+    seventhQualities: ['maj7', '7', 'm7', 'm7b5', 'maj7', 'm7', 'm7'],
+  },
+  mixolydian: {
+    label: 'Mixolídio',
+    intervals: [0, 2, 4, 5, 7, 9, 10],
+    qualities: ['', 'm', 'dim', '', 'm', 'm', ''],
+    romans: ['I', 'ii', 'iii°', 'IV', 'v', 'vi', 'bVII'],
+    seventhQualities: ['7', 'm7', 'm7b5', 'maj7', 'm7', 'm7', 'maj7'],
+  },
+  aeolian: {
+    label: 'Eólio',
+    intervals: [0, 2, 3, 5, 7, 8, 10],
+    qualities: ['m', 'dim', '', 'm', 'm', '', ''],
+    romans: ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII'],
+    seventhQualities: ['m7', 'm7b5', 'maj7', 'm7', 'm7', 'maj7', '7'],
+  },
+  locrian: {
+    label: 'Lócrio',
+    intervals: [0, 1, 3, 5, 6, 8, 10],
+    qualities: ['dim', '', 'm', 'm', '', '', 'm'],
+    romans: ['i°', 'bII', 'biii', 'iv', 'bV', 'bVI', 'bvii'],
+    seventhQualities: ['m7b5', 'maj7', 'm7', 'm7', 'maj7', 'maj7', 'm7'],
   },
 }
+
+const MODE_ORDER = ['major', 'minor', 'ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian']
 
 const PATTERNS = [
   { id: 'pop', name: 'Pop Clássica', mode: 'major', degrees: [1, 5, 6, 4], suggestedBpm: 92 },
@@ -28,6 +81,20 @@ const PATTERNS = [
   { id: 'minor-pop', name: 'Menor Pop', mode: 'minor', degrees: [1, 6, 3, 7], suggestedBpm: 92 },
   { id: 'minor-cadence', name: 'Menor Funcional', mode: 'minor', degrees: [1, 4, 5, 1], suggestedBpm: 82 },
   { id: 'andaluz', name: 'Cadência Andaluz', mode: 'minor', degrees: [1, 7, 6, 5], suggestedBpm: 96 },
+  { id: 'ionian-classic', name: 'Jônio Clássico', mode: 'ionian', degrees: [1, 4, 5, 1], suggestedBpm: 90 },
+  { id: 'ionian-open', name: 'Jônio Aberto', mode: 'ionian', degrees: [1, 2, 5, 1], suggestedBpm: 96 },
+  { id: 'dorian-groove', name: 'Dórico Groove', mode: 'dorian', degrees: [1, 4, 7, 1], suggestedBpm: 98 },
+  { id: 'dorian-fusion', name: 'Dórico Fusion', mode: 'dorian', degrees: [1, 2, 4, 1], suggestedBpm: 104 },
+  { id: 'phrygian-spanish', name: 'Frígio Espanhol', mode: 'phrygian', degrees: [1, 2, 1, 7], suggestedBpm: 108 },
+  { id: 'phrygian-dark', name: 'Frígio Tenso', mode: 'phrygian', degrees: [1, 6, 2, 1], suggestedBpm: 94 },
+  { id: 'lydian-cinematic', name: 'Lídio Cinemático', mode: 'lydian', degrees: [1, 2, 5, 1], suggestedBpm: 82 },
+  { id: 'lydian-float', name: 'Lídio Suspenso', mode: 'lydian', degrees: [1, 7, 2, 1], suggestedBpm: 76 },
+  { id: 'mixolydian-rock', name: 'Mixolídio Rock', mode: 'mixolydian', degrees: [1, 7, 4, 1], suggestedBpm: 110 },
+  { id: 'mixolydian-funk', name: 'Mixolídio Funk', mode: 'mixolydian', degrees: [1, 4, 1, 7], suggestedBpm: 102 },
+  { id: 'aeolian-melancholic', name: 'Eólio Melancólico', mode: 'aeolian', degrees: [1, 6, 7, 1], suggestedBpm: 84 },
+  { id: 'aeolian-epic', name: 'Eólio Épico', mode: 'aeolian', degrees: [1, 7, 6, 4], suggestedBpm: 92 },
+  { id: 'locrian-unstable', name: 'Lócrio Instável', mode: 'locrian', degrees: [1, 2, 5, 1], suggestedBpm: 88 },
+  { id: 'locrian-tension', name: 'Lócrio Tensão', mode: 'locrian', degrees: [1, 7, 4, 1], suggestedBpm: 96 },
 ]
 
 const BACKING_STYLES = [
@@ -129,10 +196,7 @@ function getChordIntervals(chord) {
 function buildScale(tonic, mode) {
   const modeConfig = MODES[mode]
   const tonicIndex = CHROMATIC.indexOf(tonic)
-
-  const seventhQualities = mode === 'major'
-    ? ['maj7', 'm7', 'm7', 'maj7', '7', 'm7', 'm7b5']
-    : ['m7', 'm7b5', 'maj7', 'm7', 'm7', 'maj7', '7']
+  const seventhQualities = modeConfig.seventhQualities
 
   return modeConfig.intervals.map((interval, index) => {
     const note = CHROMATIC[(tonicIndex + interval) % 12]
@@ -616,8 +680,9 @@ function Progressions() {
         <label className="prog-control">
           <span>Modo</span>
           <select value={mode} onChange={handleModeChange}>
-            <option value="major">Maior</option>
-            <option value="minor">Menor</option>
+            {MODE_ORDER.map((modeId) => (
+              <option key={modeId} value={modeId}>{MODES[modeId].label}</option>
+            ))}
           </select>
         </label>
 

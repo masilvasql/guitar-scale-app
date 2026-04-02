@@ -131,21 +131,20 @@
 }
 
 .cof-harmonic-chords {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 10px;
-  justify-content: center;
 }
 
 .cof-chord-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   border: 2px solid;
   border-radius: 10px;
-  padding: 10px 16px;
-  min-width: 56px;
+  padding: 10px 12px;
+  min-height: 86px;
   transition: transform 0.15s ease;
   cursor: pointer;
   appearance: none;
@@ -173,6 +172,24 @@
   font-size: 18px;
   font-weight: 700;
   color: #e2e8f0;
+}
+
+.cof-chord-guides {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.cof-chord-guide-pill {
+  font-size: 10px;
+  font-weight: 700;
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+  padding: 2px 8px;
+  line-height: 1.2;
 }
 
 .cof-caged-hint {
