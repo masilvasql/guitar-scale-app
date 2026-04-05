@@ -27,6 +27,9 @@ function MetronomeWidget({ initialBpm = 120 }) {
   const [accentEnabled, setAccentEnabled] = useState(true)
   const [subdivision, setSubdivision] = useState(SUBDIVISIONS[0])
   const [currentBeat, setCurrentBeat] = useState(-1)
+  const [timerMinutes, setTimerMinutes] = useState(0)
+  const [timerEnabled, setTimerEnabled] = useState(false)
+  const [timeRemaining, setTimeRemaining] = useState(0)
 
   const audioCtxRef = useRef(null)
   const timerRef = useRef(null)
@@ -37,6 +40,7 @@ function MetronomeWidget({ initialBpm = 120 }) {
   const beatsRef = useRef(timeSignature.beats)
   const accentRef = useRef(accentEnabled)
   const subdivisionRef = useRef(subdivision.divisor)
+  const timerIntervalRef = useRef(null)
 
   useEffect(() => {
     bpmRef.current = bpm
@@ -69,6 +73,10 @@ function MetronomeWidget({ initialBpm = 120 }) {
       clearTimeout(timerRef.current)
       timerRef.current = null
     }
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current)
+      timerIntervalRef.current = null
+    }
   }, [])
 
   useEffect(() => {
@@ -76,6 +84,48 @@ function MetronomeWidget({ initialBpm = 120 }) {
       stopMetronome()
     }
   }, [stopMetronome])
+
+  // Gerencia o timer quando o metrônomo inicia/para ou timer é habilitado/desabilitado
+  useEffect(() => {
+    if (isPlaying && timerEnabled && timerMinutes > 0) {
+      // Inicia novo timer
+      const totalSeconds = timerMinutes * 60
+      setTimeRemaining(totalSeconds)
+      
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current)
+      }
+      
+      timerIntervalRef.current = setInterval(() => {
+        setTimeRemaining(prev => {
+          const newTime = prev - 1
+          if (newTime <= 0) {
+            clearInterval(timerIntervalRef.current)
+            timerIntervalRef.current = null
+            // Para o metrônomo quando o timer termina
+            stopMetronome()
+            return 0
+          }
+          return newTime
+        })
+      }, 1000)
+    } else {
+      // Para o timer
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current)
+        timerIntervalRef.current = null
+      }
+      if (!isPlaying) {
+        setTimeRemaining(0)
+      }
+    }
+
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current)
+      }
+    }
+  }, [isPlaying, timerEnabled, timerMinutes, stopMetronome])
 
   const getAudioContext = useCallback(() => {
     if (!audioCtxRef.current) {
@@ -271,6 +321,44 @@ function MetronomeWidget({ initialBpm = 120 }) {
             </svg>
           )}
         </button>
+      </div>
+
+      <div className="met-section">
+        <label className="met-section-label">⏱ Tempo (minutos)</label>
+        <div className="met-timer-controls">
+          <input
+            type="number"
+            min="0"
+            max="60"
+            value={timerMinutes}
+            onChange={(e) => setTimerMinutes(Math.max(0, Math.min(60, Number(e.target.value))))}
+            disabled={isPlaying}
+            className="met-timer-input"
+            placeholder="0"
+          />
+          <span className="met-timer-label">min</span>
+          {timerEnabled && timeRemaining > 0 && (
+            <div className="met-timer-display">
+              {Math.floor(timeRemaining / 60)}:{String(timeRemaining % 60).padStart(2, '0')}
+            </div>
+          )}
+        </div>
+        <div className="met-timer-toggle">
+          <button
+            className={`met-toggle-btn ${timerEnabled ? 'active' : ''}`}
+            onClick={() => setTimerEnabled(true)}
+            disabled={isPlaying}
+          >
+            Ativo
+          </button>
+          <button
+            className={`met-toggle-btn ${!timerEnabled ? 'active' : ''}`}
+            onClick={() => setTimerEnabled(false)}
+            disabled={isPlaying}
+          >
+            Inativo
+          </button>
+        </div>
       </div>
 
       <div className="met-section">

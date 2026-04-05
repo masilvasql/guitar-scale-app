@@ -7,6 +7,7 @@ import Metronome from './pages/Metronome'
 import Afinador from './pages/Afinador'
 import Progressions from './pages/Progressions'
 import GuideNotes from './pages/GuideNotes'
+import ChordDictionary from './pages/ChordDictionary'
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
       <Route path="/afinador" element={<Afinador />} />
       <Route path="/progressoes" element={<Progressions />} />
       <Route path="/notas-guia" element={<GuideNotes />} />
+      <Route path="/dicionario-de-acordes" element={<ChordDictionary />} />
     </Routes>
   )
 }

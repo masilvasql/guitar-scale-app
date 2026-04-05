@@ -166,6 +166,30 @@ function Home() {
       path: '/progressoes',
     },
     {
+      title: 'Dicionário de Acordes',
+      description: 'Digite uma cifra e veja formas para tocar no braço com áudio',
+      category: 'Harmonia',
+      badge: 'Novo',
+      quick: true,
+      icon: (
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="8" width="36" height="32" rx="4" stroke="currentColor" strokeWidth="2" fill="none"/>
+          <line x1="12" y1="14" x2="12" y2="34" stroke="currentColor" strokeWidth="1.5"/>
+          <line x1="18" y1="14" x2="18" y2="34" stroke="currentColor" strokeWidth="1.5"/>
+          <line x1="24" y1="14" x2="24" y2="34" stroke="currentColor" strokeWidth="1.5"/>
+          <line x1="30" y1="14" x2="30" y2="34" stroke="currentColor" strokeWidth="1.5"/>
+          <line x1="36" y1="14" x2="36" y2="34" stroke="currentColor" strokeWidth="1.5"/>
+          <line x1="8" y1="18" x2="40" y2="18" stroke="currentColor" strokeWidth="1.5"/>
+          <line x1="8" y1="24" x2="40" y2="24" stroke="currentColor" strokeWidth="1.5"/>
+          <line x1="8" y1="30" x2="40" y2="30" stroke="currentColor" strokeWidth="1.5"/>
+          <circle cx="18" cy="18" r="2.8" fill="#2196F3"/>
+          <circle cx="24" cy="24" r="2.8" fill="#4CAF50"/>
+          <circle cx="30" cy="30" r="2.8" fill="#FF9800"/>
+        </svg>
+      ),
+      path: '/dicionario-de-acordes',
+    },
+    {
       title: 'Notas Guia',
       description: 'Veja 3ª e 7ª dos acordes para improvisar melhor',
       category: 'Harmonia',

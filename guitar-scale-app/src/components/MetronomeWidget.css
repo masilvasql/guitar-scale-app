@@ -363,3 +363,79 @@
     gap: 6px;
   }
 }
+
+/* Timer Styles */
+.met-timer-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.met-timer-input {
+  width: 70px;
+  padding: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  color: #fff;
+  background: #2a2a3e;
+  border: 2px solid #444;
+  border-radius: 8px;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  -moz-appearance: textfield;
+}
+
+.met-timer-input::-webkit-inner-spin-button,
+.met-timer-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.met-timer-input:hover:not(:disabled) {
+  border-color: #2196F3;
+}
+
+.met-timer-input:focus {
+  border-color: #2196F3;
+  background: rgba(33, 150, 243, 0.1);
+}
+
+.met-timer-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.met-timer-label {
+  color: #888;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.met-timer-display {
+  background: rgba(33, 150, 243, 0.15);
+  border: 2px solid #2196F3;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #2196F3;
+  min-width: 60px;
+  text-align: center;
+  animation: timer-pulse 1s ease-out infinite;
+}
+
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.met-timer-toggle {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
